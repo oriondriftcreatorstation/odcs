@@ -367,7 +367,7 @@
                             <path d="M6 8L1 3L11 3L6 8Z" fill="white"/>
                         </svg>
                         <div class="dropdown-menu" id="dropdownMenu">
-                            <a href="#" class="logout-item" onclick="logout()">🚪 Logout</a>
+                            <a href="#" class="logout-item" onclick="logout()">Logout</a>
                         </div>
                     </div>
                 `;
@@ -432,7 +432,7 @@
 
             const user = JSON.parse(localStorage.getItem('discordUser'));
             if (!user) {
-                showStatus('❌ Please login with Discord first.', 'error');
+                showStatus('Please login with Discord first.', 'error');
                 return;
             }
 
@@ -498,10 +498,10 @@
                     form.reset();
                 } else {
                     const errorText = await response.text();
-                    showStatus(`❌ Discord error: ${errorText}`, 'error');
+                    showStatus(`Discord error: ${errorText}`, 'error');
                 }
             } catch (error) {
-                showStatus(`❌ Network error: ${error.message}`, 'error');
+                showStatus(`Network error: ${error.message}`, 'error');
             } finally {
                 submitBtn.disabled = false;
             }
