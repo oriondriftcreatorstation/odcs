@@ -143,7 +143,7 @@
                 });
             } else {
                 navbarProfile.innerHTML = `
-                    <a href="${AUTH_BACKEND_URL}/api/login" class="login-nav-btn">
+                    <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
                         <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/>
                             <path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/>
