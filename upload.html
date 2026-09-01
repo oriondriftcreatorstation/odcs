@@ -185,6 +185,13 @@
             box-shadow: 0 8px 25px rgba(88, 101, 242, 0.35);
         }
 
+        /* Disabled button state if not logged in */
+        .submit-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
         @media (max-width: 760px) {
             .form-container {
                 max-width: 100%;
@@ -251,19 +258,13 @@
             <!-- ===== THE FORM ===== -->
             <div class="form-container">
                 <form id="discordForm">
-                    <!-- 1. Name -->
-                    <div class="form-group">
-                        <label for="userName">Discord Username</label>
-                        <input type="text" id="userName" placeholder="e.g. tsubivr" required />
-                    </div>
-
-                    <!-- 2. Reason -->
+                    <!-- 1. Description (Reason) -->
                     <div class="form-group">
                         <label for="reason">Description</label>
                         <textarea id="reason" placeholder="I need help with this..&#10;Can you upload this asset?" required></textarea>
                     </div>
 
-                    <!-- 3. Optional Upload Link -->
+                    <!-- 2. Optional Upload Link -->
                     <div class="form-group">
                         <label for="uploadLink">
                             Upload Link
@@ -335,9 +336,7 @@
         // ── DISCORD LOGIN LOGIC ──
         // ─────────────────────────────────────────────
 
-        // ✅ This auto-detects your Vercel URL
         const AUTH_BACKEND_URL = window.location.origin;
-
         const userAuthDiv = document.getElementById('userAuth');
 
         function renderUserUI() {
@@ -355,6 +354,8 @@
                         <button class="logout-btn" onclick="logout()">Logout</button>
                     </div>
                 `;
+                // Enable submit button
+                document.getElementById('submitBtn').disabled = false;
             } else {
                 userAuthDiv.innerHTML = `
                     <a href="${AUTH_BACKEND_URL}/api/login" class="login-btn">
@@ -365,6 +366,13 @@
                         Login with Discord
                     </a>
                 `;
+                // Disable submit button until logged in
+                document.getElementById('submitBtn').disabled = true;
+                // Show a hint
+                const statusDiv = document.getElementById('formStatus');
+                statusDiv.textContent = '⚠️ Please login with Discord to submit a ticket.';
+                statusDiv.className = 'error';
+                statusDiv.style.display = 'block';
             }
         }
 
@@ -391,7 +399,7 @@
         // ── DISCORD WEBHOOK FORM LOGIC ──
         // ─────────────────────────────────────────────
 
-        // 🔴 IMPORTANT: Replace this with your actual Discord Webhook URL
+        // 🔴 Replace with your actual Discord Webhook URL (for forum channel)
         const WEBHOOK_URL = 'https://discord.com/api/webhooks/1544377650427076688/h3zKCeyJThKUJy-qPeyMuJZ7V2qw8khyaav4dEugK9CPRN_AcQ-bIAgB3P-D3gu2VNa_';
 
         const form = document.getElementById('discordForm');
@@ -401,29 +409,66 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const userName = document.getElementById('userName').value.trim();
-            const reason = document.getElementById('reason').value.trim();
-            const uploadLink = document.getElementById('uploadLink').value.trim();
-
-            if (!userName || !reason) {
-                showStatus('Please fill in your name and the reason.', 'error');
+            // Get logged-in user from localStorage
+            const user = JSON.parse(localStorage.getItem('discordUser'));
+            if (!user) {
+                showStatus('❌ Please login with Discord first.', 'error');
                 return;
             }
 
-            const threadName = `${userName}`.slice(0, 100);
+            const reason = document.getElementById('reason').value.trim();
+            const uploadLink = document.getElementById('uploadLink').value.trim();
 
-            let content = `**User:** ${userName}\n\n**Reason:**\n${reason}`;
-            if (uploadLink) {
-                content += `\n\n**Upload Link:**\n${uploadLink}`;
+            if (!reason) {
+                showStatus('Please describe your request.', 'error');
+                return;
             }
 
-            const payload = {
-                thread_name: threadName,
-                content: content
+            // 1. Thread title: username (ID)
+            const threadName = `${user.username} (${user.id})`.slice(0, 100);
+
+            // 2. Build the embed
+            const embed = {
+                color: 0x5865F2, // Discord blurple
+                author: {
+                    name: user.username,
+                    icon_url: user.avatar
+                        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+                        : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`
+                },
+                description: `**Description:**\n${reason}`,
+                fields: [
+                    {
+                        name: 'Upload Link',
+                        value: uploadLink || 'None provided',
+                        inline: false
+                    },
+                    {
+                        name: 'Date Submitted',
+                        value: new Date().toLocaleString('en-US', { timeZone: 'UTC' }),
+                        inline: false
+                    }
+                ],
+                footer: {
+                    text: 'User ID: ' + user.id
+                },
+                timestamp: new Date().toISOString()
             };
 
+            // 3. We want to mention the user in the content, so we put a mention in the content field.
+            // But we also want the embed to show the details.
+            const content = `<@${user.id}> submitted a new request!`;
+
+            // Discord payload for forum thread creation
+            const payload = {
+                thread_name: threadName,
+                content: content,
+                embeds: [embed]
+            };
+
+            // Show loading state
             submitBtn.disabled = true;
-            showStatus('Creating Ticket', 'loading');
+            showStatus('Creating ticket...', 'loading');
 
             try {
                 const response = await fetch(WEBHOOK_URL, {
@@ -433,7 +478,7 @@
                 });
 
                 if (response.ok) {
-                    showStatus('✅ Ticket submitted.', 'success');
+                    showStatus('✅ Ticket submitted!', 'success');
                     form.reset();
                 } else {
                     const errorText = await response.text();
