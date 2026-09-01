@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About - Orion Drift Creator Station</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/ODCS.png" />
+    <link rel="apple-touch-icon" href="assets/ODCS.png" />
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <!-- Background -->
+    <div class="background">
+        <div class="glow glow-one"></div>
+        <div class="glow glow-two"></div>
+        <div class="grid"></div>
+    </div>
+
+    <!-- Floating Pill Navbar -->
+    <header class="navbar">
+        <div class="pill">
+            <a href="index.html" class="logo">
+                <span class="logo-mark">
+                    <img src="assets/ODCS.png" alt="Orion Drift Creator Station Logo" />
+                </span>
+                <span>Creator Station</span>
+            </a>
+
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse</a>
+                <a href="sounds.html">Sounds</a>
+                <a href="images.html">Images</a>
+                <a href="models.html">Models</a>
+                <a href="upload.html">Upload</a>
+                <a href="about.html" class="active">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <main class="hero about-hero">
+        <div class="hero-content">
+            <div class="eyebrow">
+                <span></span>
+                ABOUT US
+            </div>
+
+            <h1>Orion Drift Creator Station</h1>
+
+            <p>Our goal is to provide different assets, guides, and tools to elevate your content and make it the best that Orion Drift has ever seen. <br>We provide numerous assets such as sound effects, images, models, and more! <br><br>This project was based on MyGuyOD's Orion Drift Creator Station, props to them!</p>
+
+            <div class="actions">
+                <!-- No button needed, but we can keep the browse link if desired -->
+                <!-- <a href="index.html" class="primary-button">
+                    Back to Home
+                    <span>→</span>
+                </a> -->
+            </div>
+        </div>
+    </main>
+
+    <!-- About Content Section -->
+    <section class="placeholder-section about-content">
+        <h2>Our Mission</h2>
+        <p>
+            We aim to empower every Orion Drift creator with the resources they need.
+            Whether you're building worlds, characters, or experiences, our library
+            is constantly growing with high-quality assets contributed by the community.
+        </p>
+
+        <h2 style="margin-top: 60px;">Contact</h2>
+        <p>
+            If you need to contact us for questions, suggestions or anything, DM @tsubivr on Discord or email us at:
+            <br />
+            <a href="mailto:contact@oriondrift.example.com" class="contact-email">contact@oriondrift.example.com</a>
+        </p>
+    </section>
+
+    <script>
+        // ── Custom cursor with inversion effect ──
+        const cursorRing = document.getElementById('cursorRing');
+        let mouseX = 0, mouseY = 0;
+        let ringX = 0, ringY = 0;
+        let isHoveringInteractive = false;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            const target = e.target;
+            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button') || target.closest('.contact-email');
+            isHoveringInteractive = !!isInteractive;
+
+            if (isHoveringInteractive) {
+                cursorRing.style.width = '48px';
+                cursorRing.style.height = '48px';
+                cursorRing.style.border = '2px solid rgba(255,255,255,0.4)';
+                cursorRing.style.background = 'rgba(255,255,255,0.08)';
+                cursorRing.style.backdropFilter = 'blur(2px)';
+                cursorRing.style.mixBlendMode = 'normal';
+            } else {
+                cursorRing.style.width = '32px';
+                cursorRing.style.height = '32px';
+                cursorRing.style.border = 'none';
+                cursorRing.style.background = 'white';
+                cursorRing.style.backdropFilter = 'none';
+                cursorRing.style.mixBlendMode = 'difference';
+            }
+        });
+
+        function animateCursor() {
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            cursorRing.style.left = (ringX - cursorRing.offsetWidth / 2) + 'px';
+            cursorRing.style.top = (ringY - cursorRing.offsetHeight / 2) + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+
+        document.body.style.cursor = 'none';
+
+        document.addEventListener('mouseleave', () => { cursorRing.style.opacity = '0'; });
+        document.addEventListener('mouseenter', () => { cursorRing.style.opacity = '1'; });
+
+        animateCursor();
+    </script>
+</body>
+</html>

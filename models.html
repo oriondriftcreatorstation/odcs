@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orion Drift Creator Station</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/ODCS.png" />
+    <link rel="apple-touch-icon" href="assets/ODCS.png" />
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <!-- Background -->
+    <div class="background">
+        <div class="glow glow-one"></div>
+        <div class="glow glow-two"></div>
+        <div class="grid"></div>
+    </div>
+
+    <!-- Floating Pill Navbar -->
+    <header class="navbar">
+        <div class="pill">
+            <a href="#" class="logo">
+                <!-- Replaced "OD" text with your image -->
+                <span class="logo-mark">
+                    <img src="assets/ODCS.png" alt="Orion Drift Creator Station Logo" />
+                </span>
+                <span>Creator Station</span>
+            </a>
+
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse</a>
+                <a href="sounds.html">Sounds</a>
+                <a href="images.html">Images</a>
+                <a href="models.html" class="active" >Models</a>
+                <a href="upload.html">Upload</a>
+                <a href="about.html">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <main class="hero">
+        <div class="hero-content">
+            <div class="eyebrow">
+                <span></span>
+                Orion Drift Creator Station
+            </div>
+
+            <h1>
+                Browse all models
+            </h1>
+
+            <p>
+                From Circuit Lounge to the Golf Cart, we have all the in-game models for you.
+            </p>
+        </div>
+        <div class="scroll-indicator">
+                <span></span>
+                SCROLL TO EXPLORE
+        </div>
+    </main>
+
+    <script>
+        // ── Custom cursor with inversion effect ──
+        const cursorRing = document.getElementById('cursorRing');
+        let mouseX = 0, mouseY = 0;
+        let ringX = 0, ringY = 0;
+        let isHoveringInteractive = false;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            const target = e.target;
+            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button');
+            isHoveringInteractive = !!isInteractive;
+
+            if (isHoveringInteractive) {
+                cursorRing.style.width = '48px';
+                cursorRing.style.height = '48px';
+                cursorRing.style.border = '2px solid rgba(255,255,255,0.4)';
+                cursorRing.style.background = 'rgba(255,255,255,0.08)';
+                cursorRing.style.backdropFilter = 'blur(2px)';
+                cursorRing.style.mixBlendMode = 'normal';
+            } else {
+                cursorRing.style.width = '32px';
+                cursorRing.style.height = '32px';
+                cursorRing.style.border = 'none';
+                cursorRing.style.background = 'white';
+                cursorRing.style.backdropFilter = 'none';
+                cursorRing.style.mixBlendMode = 'difference';
+            }
+        });
+
+        function animateCursor() {
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            cursorRing.style.left = (ringX - cursorRing.offsetWidth / 2) + 'px';
+            cursorRing.style.top = (ringY - cursorRing.offsetHeight / 2) + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+
+        document.body.style.cursor = 'none';
+
+        document.addEventListener('mouseleave', () => { cursorRing.style.opacity = '0'; });
+        document.addEventListener('mouseenter', () => { cursorRing.style.opacity = '1'; });
+
+        animateCursor();
+    </script>
+</body>
+</html>
