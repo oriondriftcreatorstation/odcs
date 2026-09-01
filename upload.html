@@ -234,7 +234,7 @@
     <!-- Floating Pill Navbar -->
     <header class="navbar">
         <div class="pill">
-            <!-- 👇 Profile replaces the logo -->
+            <!-- Profile replaces the logo -->
             <div id="navbarProfile">
                 <!-- Filled by JavaScript -->
             </div>
@@ -405,7 +405,7 @@
                 // Disable submit button until logged in
                 document.getElementById('submitBtn').disabled = true;
                 const statusDiv = document.getElementById('formStatus');
-                statusDiv.textContent = '🔒 Please login with Discord to submit a request.';
+                statusDiv.textContent = 'Please login with Discord to submit a request.';
                 statusDiv.className = 'error';
                 statusDiv.style.display = 'block';
             }
@@ -420,7 +420,7 @@
         // ── DISCORD WEBHOOK FORM LOGIC ──
         // ─────────────────────────────────────────────
 
-        // 🔴 REPLACE with your actual Discord Webhook URL (Forum Channel)
+        // REPLACE with your actual Discord Webhook URL (Forum Channel)
         const WEBHOOK_URL = 'https://discord.com/api/webhooks/1544377650427076688/h3zKCeyJThKUJy-qPeyMuJZ7V2qw8khyaav4dEugK9CPRN_AcQ-bIAgB3P-D3gu2VNa_';
 
         const form = document.getElementById('discordForm');
@@ -494,7 +494,7 @@
                 });
 
                 if (response.ok) {
-                    showStatus('✅ Request submitted! Check your tickets in Discord.', 'success');
+                    showStatus('Request submitted! Check your tickets in Discord.', 'success');
                     form.reset();
                 } else {
                     const errorText = await response.text();
