@@ -26,21 +26,16 @@
     <!-- Floating Pill Navbar -->
     <header class="navbar">
         <div class="pill">
-            <a href="#" class="logo">
-                <!-- Replaced "OD" text with your image -->
-                <span class="logo-mark">
-                    <img src="assets/ODCS.png" alt="Orion Drift Creator Station Logo" />
-                </span>
-                <span>Creator Station</span>
-            </a>
+            <!-- Profile / Login replaces the logo -->
+            <div id="navbarProfile"></div>
 
             <nav>
-                <a href="#" class="active">Home</a>
+                <a href="index.html" class="active">Home</a>
                 <a href="browse.html">Browse</a>
                 <a href="sounds.html">Sounds</a>
                 <a href="images.html">Images</a>
                 <a href="models.html">Models</a>
-                <a href="upload.html">Upload</a>
+                <a href="upload.html">Contact</a>
                 <a href="about.html">About</a>
             </nav>
         </div>
@@ -66,7 +61,7 @@
             </p>
 
             <div class="actions">
-                <a href="#" class="primary-button">
+                <a href="browse.html" class="primary-button">
                     Browse Assets
                     <span>→</span>
                 </a>
@@ -95,8 +90,10 @@
     <script>
         // ── Custom cursor with inversion effect ──
         const cursorRing = document.getElementById('cursorRing');
-        let mouseX = 0, mouseY = 0;
-        let ringX = 0, ringY = 0;
+        let mouseX = 0,
+            mouseY = 0;
+        let ringX = 0,
+            ringY = 0;
         let isHoveringInteractive = false;
 
         document.addEventListener('mousemove', (e) => {
@@ -104,7 +101,7 @@
             mouseY = e.clientY;
 
             const target = e.target;
-            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button');
+            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button') || target.closest('.login-nav-btn') || target.closest('.profile-container');
             isHoveringInteractive = !!isInteractive;
 
             if (isHoveringInteractive) {
@@ -138,6 +135,79 @@
         document.addEventListener('mouseenter', () => { cursorRing.style.opacity = '1'; });
 
         animateCursor();
+
+        // ─────────────────────────────────────────────
+        // ── NAVBAR PROFILE LOGIC ──
+        // ─────────────────────────────────────────────
+
+        const AUTH_BACKEND_URL = window.location.origin;
+        const navbarProfile = document.getElementById('navbarProfile');
+
+        function renderNavbarProfile() {
+            const user = JSON.parse(localStorage.getItem('discordUser'));
+
+            if (user) {
+                const avatarUrl = user.avatar ?
+                    `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64` :
+                    `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
+
+                navbarProfile.innerHTML = `
+                    <div class="profile-container" id="profileDropdown">
+                        <img src="${avatarUrl}" alt="Avatar" />
+                        <span class="username">${user.username}</span>
+                        <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M6 8L1 3L11 3L6 8Z" fill="white"/>
+                        </svg>
+                        <div class="dropdown-menu" id="dropdownMenu">
+                            <a href="#" class="logout-item" onclick="logout()">Logout</a>
+                        </div>
+                    </div>
+                `;
+
+                const container = document.getElementById('profileDropdown');
+                const menu = document.getElementById('dropdownMenu');
+                container.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    container.classList.toggle('open');
+                    menu.classList.toggle('show');
+                });
+                document.addEventListener('click', () => {
+                    container.classList.remove('open');
+                    menu.classList.remove('show');
+                });
+            } else {
+                navbarProfile.innerHTML = `
+                    <a href="${AUTH_BACKEND_URL}/api/login" class="login-nav-btn">
+                        <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/>
+                            <path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/>
+                        </svg>
+                        Login
+                    </a>
+                `;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('discordUser');
+            window.location.href = window.location.pathname;
+        }
+
+        // ── Handle OAuth redirect ──
+        (function handleRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+            const id = urlParams.get('id');
+            const avatar = urlParams.get('avatar');
+
+            if (username && id) {
+                localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        })();
+
+        renderNavbarProfile();
     </script>
 </body>
 </html>
