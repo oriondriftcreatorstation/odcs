@@ -10,6 +10,188 @@
     <link rel="apple-touch-icon" href="assets/ODCS.png" />
 
     <link rel="stylesheet" href="style.css" />
+
+    <!-- ===== Form-specific styles ===== -->
+    <style>
+        .form-container {
+            max-width: 520px;
+            margin: 35px auto 0;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 5px;
+            letter-spacing: 0.01em;
+        }
+
+        .form-group label .optional {
+            font-weight: 400;
+            color: var(--muted);
+            font-size: 11px;
+            margin-left: 4px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: "Inter", Arial, sans-serif;
+            font-size: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--accent);
+            color: #08090b;
+            font-family: "Inter", Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 6px;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.08);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        #formStatus {
+            margin-top: 18px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        #formStatus.success {
+            display: block;
+            background: rgba(46, 213, 115, 0.12);
+            color: #2ed573;
+            border: 1px solid rgba(46, 213, 115, 0.2);
+        }
+
+        #formStatus.error {
+            display: block;
+            background: rgba(255, 71, 87, 0.12);
+            color: #ff4757;
+            border: 1px solid rgba(255, 71, 87, 0.2);
+        }
+
+        #formStatus.loading {
+            display: block;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+
+        /* Discord Login Button Styles */
+        .auth-container {
+            margin: 20px auto 30px;
+            text-align: center;
+        }
+
+        .auth-container .user-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 8px 16px 8px 12px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+        }
+
+        .auth-container .user-info img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-container .user-info span {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .auth-container .user-info .logout-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .auth-container .user-info .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .login-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: #5865F2;
+            color: white;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(88, 101, 242, 0.35);
+        }
+
+        @media (max-width: 760px) {
+            .form-container {
+                max-width: 100%;
+                padding: 0 4px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -27,7 +209,6 @@
     <header class="navbar">
         <div class="pill">
             <a href="#" class="logo">
-                <!-- Replaced "OD" text with your image -->
                 <span class="logo-mark">
                     <img src="assets/ODCS.png" alt="Orion Drift Creator Station Logo" />
                 </span>
@@ -40,13 +221,13 @@
                 <a href="sounds.html">Sounds</a>
                 <a href="images.html">Images</a>
                 <a href="models.html">Models</a>
-                <a href="upload.html" class="active" >Upload</a>
+                <a href="upload.html" class="active">Contact</a>
                 <a href="about.html">About</a>
             </nav>
         </div>
     </header>
 
-    <!-- Hero -->
+    <!-- Hero + Form -->
     <main class="hero">
         <div class="hero-content">
             <div class="eyebrow">
@@ -55,20 +236,59 @@
             </div>
 
             <h1>
-                Missing something?
+                Need help?
             </h1>
 
             <p>
-                Fill out this form with the asset you'd like to get (or share) and we will upload it!
+                Please fill out this form to contact us! This is for questions or requesting assets only.
             </p>
+
+            <!-- ===== DISCORD LOGIN / USER INFO ===== -->
+            <div class="auth-container" id="userAuth">
+                <!-- Will be filled by JavaScript -->
+            </div>
+
+            <!-- ===== THE FORM ===== -->
+            <div class="form-container">
+                <form id="discordForm">
+                    <!-- 1. Name -->
+                    <div class="form-group">
+                        <label for="userName">Discord Username</label>
+                        <input type="text" id="userName" placeholder="e.g. tsubivr" required />
+                    </div>
+
+                    <!-- 2. Reason -->
+                    <div class="form-group">
+                        <label for="reason">Description</label>
+                        <textarea id="reason" placeholder="I need help with this..&#10;Can you upload this asset?" required></textarea>
+                    </div>
+
+                    <!-- 3. Optional Upload Link -->
+                    <div class="form-group">
+                        <label for="uploadLink">
+                            Upload Link
+                            <span class="optional">(optional — if you're supplying the file)</span>
+                        </label>
+                        <input type="url" id="uploadLink" placeholder="https://example.com/my-asset.zip" />
+                    </div>
+
+                    <button type="submit" class="submit-button" id="submitBtn">
+                        Submit Ticket
+                    </button>
+                </form>
+
+                <div id="formStatus"></div>
+            </div>
         </div>
     </main>
 
     <script>
         // ── Custom cursor with inversion effect ──
         const cursorRing = document.getElementById('cursorRing');
-        let mouseX = 0, mouseY = 0;
-        let ringX = 0, ringY = 0;
+        let mouseX = 0,
+            mouseY = 0;
+        let ringX = 0,
+            ringY = 0;
         let isHoveringInteractive = false;
 
         document.addEventListener('mousemove', (e) => {
@@ -76,7 +296,7 @@
             mouseY = e.clientY;
 
             const target = e.target;
-            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button');
+            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button') || target.closest('.submit-button') || target.closest('.login-btn');
             isHoveringInteractive = !!isInteractive;
 
             if (isHoveringInteractive) {
@@ -110,6 +330,139 @@
         document.addEventListener('mouseenter', () => { cursorRing.style.opacity = '1'; });
 
         animateCursor();
+
+        // ─────────────────────────────────────────────
+        // ── DISCORD LOGIN LOGIC ──
+        // ─────────────────────────────────────────────
+
+        // ✅ This auto-detects your Vercel URL
+        const AUTH_BACKEND_URL = window.location.origin;
+
+        const userAuthDiv = document.getElementById('userAuth');
+
+        function renderUserUI() {
+            const user = JSON.parse(localStorage.getItem('discordUser'));
+
+            if (user) {
+                const avatarUrl = user.avatar
+                    ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
+                    : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
+
+                userAuthDiv.innerHTML = `
+                    <div class="user-info">
+                        <img src="${avatarUrl}" alt="Avatar" />
+                        <span>${user.username}</span>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                `;
+            } else {
+                userAuthDiv.innerHTML = `
+                    <a href="${AUTH_BACKEND_URL}/api/login" class="login-btn">
+                        <svg width="20" height="20" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/>
+                            <path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/>
+                        </svg>
+                        Login with Discord
+                    </a>
+                `;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('discordUser');
+            renderUserUI();
+            window.location.href = window.location.pathname;
+        }
+
+        function handleRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+            const id = urlParams.get('id');
+            const avatar = urlParams.get('avatar');
+
+            if (username && id) {
+                localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // ── DISCORD WEBHOOK FORM LOGIC ──
+        // ─────────────────────────────────────────────
+
+        // 🔴 IMPORTANT: Replace this with your actual Discord Webhook URL
+        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1544377650427076688/h3zKCeyJThKUJy-qPeyMuJZ7V2qw8khyaav4dEugK9CPRN_AcQ-bIAgB3P-D3gu2VNa_';
+
+        const form = document.getElementById('discordForm');
+        const statusDiv = document.getElementById('formStatus');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userName = document.getElementById('userName').value.trim();
+            const reason = document.getElementById('reason').value.trim();
+            const uploadLink = document.getElementById('uploadLink').value.trim();
+
+            if (!userName || !reason) {
+                showStatus('Please fill in your name and the reason.', 'error');
+                return;
+            }
+
+            const threadName = `${userName}`.slice(0, 100);
+
+            let content = `**User:** ${userName}\n\n**Reason:**\n${reason}`;
+            if (uploadLink) {
+                content += `\n\n**Upload Link:**\n${uploadLink}`;
+            }
+
+            const payload = {
+                thread_name: threadName,
+                content: content
+            };
+
+            submitBtn.disabled = true;
+            showStatus('Creating Ticket', 'loading');
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Ticket submitted.', 'success');
+                    form.reset();
+                } else {
+                    const errorText = await response.text();
+                    showStatus(`❌ Discord error: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+            statusDiv.style.display = 'block';
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 8000);
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // ── RUN ON PAGE LOAD ──
+        // ─────────────────────────────────────────────
+
+        handleRedirect();
+        renderUserUI();
     </script>
 </body>
 </html>
