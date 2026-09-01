@@ -367,8 +367,6 @@
                             <path d="M6 8L1 3L11 3L6 8Z" fill="white"/>
                         </svg>
                         <div class="dropdown-menu" id="dropdownMenu">
-                            <a href="#" onclick="window.open('https://discord.com/channels/@me', '_blank')">💬 Open Discord</a>
-                            <a href="#" onclick="alert('Check your tickets in the #modmail channel on our Discord!')">📋 My Tickets</a>
                             <a href="#" class="logout-item" onclick="logout()">🚪 Logout</a>
                         </div>
                     </div>
@@ -461,13 +459,13 @@
                 description: `**Asset Request:**\n${reason}`,
                 fields: [
                     {
-                        name: '📎 Upload Link',
+                        name: 'Upload Link',
                         value: uploadLink || 'None provided',
                         inline: false
                     },
                     {
-                        name: '📅 Date Submitted',
-                        value: new Date().toLocaleString('en-US', { timeZone: 'UTC' }),
+                        name: 'Date Submitted',
+                        value: new Date().toLocaleString('en-US', { timeZone: 'EST' }),
                         inline: false
                     }
                 ],
