@@ -1,511 +1,1802 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Browse – Orion Drift Creator Station</title>
-    <link rel="icon" type="image/png" href="assets/ODCS.png" />
-    <link rel="apple-touch-icon" href="assets/ODCS.png" />
-    <link rel="stylesheet" href="style.css" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+
+```
+<link rel="icon" type="image/png" href="assets/ODCS.png" />
+<link rel="apple-touch-icon" href="assets/ODCS.png" />
+<link rel="stylesheet" href="style.css" />
+
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+```
+
 </head>
+
 <body>
-    <!-- HTML structure unchanged -->
-    <div class="cursor-ring" id="cursorRing"></div>
-    <div class="background">
-        <div class="glow glow-one"></div>
-        <div class="glow glow-two"></div>
-        <div class="grid"></div>
+
+```
+<div class="cursor-ring" id="cursorRing"></div>
+
+<div class="background">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="grid"></div>
+</div>
+
+<header class="navbar">
+    <div class="pill">
+        <div id="navbarProfile"></div>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="browse.html" class="active">Browse</a>
+            <a href="upload.html">Contact</a>
+            <a href="about.html">About</a>
+        </nav>
+    </div>
+</header>
+
+<section class="hero hero-browse">
+    <div class="hero-content">
+        <div class="eyebrow">
+            <span></span>
+            Orion Drift Creator Station
+        </div>
+
+        <h1>Browse all assets</h1>
+        <p>From sound effects to models, find what you need.</p>
     </div>
 
-    <header class="navbar">
-        <div class="pill">
-            <div id="navbarProfile"></div>
-            <nav>
-                <a href="index.html">Home</a>
-                <a href="browse.html" class="active">Browse</a>
-                <a href="upload.html">Contact</a>
-                <a href="about.html">About</a>
-            </nav>
-        </div>
-    </header>
+    <div class="scroll-indicator">
+        <span></span>
+        SCROLL TO EXPLORE
+    </div>
+</section>
 
-    <section class="hero hero-browse">
-        <div class="hero-content">
-            <div class="eyebrow"><span></span>Orion Drift Creator Station</div>
-            <h1>Browse all assets</h1>
-            <p>From sound effects to models, find what you need.</p>
-        </div>
-        <div class="scroll-indicator"><span></span>SCROLL TO EXPLORE</div>
-    </section>
+<section class="browse-section" id="browseSection">
 
-    <section class="browse-section" id="browseSection">
-        <div class="filter-bar" id="filterBar">
-            <div class="filter-pills" id="filterPills">
-                <button class="filter-pill active" data-filter="all">All <span class="count"></span></button>
-                <button class="filter-pill" data-filter="image">Images <span class="count"></span></button>
-                <button class="filter-pill" data-filter="sound">Sounds <span class="count"></span></button>
-                <button class="filter-pill" data-filter="model">Models <span class="count"></span></button>
-            </div>
-            <div class="search-wrapper">
-                <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11L14.5 14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input class="search-input" id="searchInput" type="text" placeholder="Search assets…" />
-            </div>
+    <div class="filter-bar" id="filterBar">
+
+        <div class="filter-pills" id="filterPills">
+            <button class="filter-pill active" data-filter="all">
+                All <span class="count"></span>
+            </button>
+
+            <button class="filter-pill" data-filter="image">
+                Images <span class="count"></span>
+            </button>
+
+            <button class="filter-pill" data-filter="sound">
+                Sounds <span class="count"></span>
+            </button>
+
+            <button class="filter-pill" data-filter="model">
+                Models <span class="count"></span>
+            </button>
         </div>
 
-        <div class="asset-grid" id="assetGrid">
-            <div class="loading-grid">
-                <div class="spinner"></div>
-                <span style="color:var(--muted);font-size:14px;">Loading assets...</span>
-            </div>
-        </div>
-    </section>
+        <div class="search-wrapper">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+                <circle
+                    cx="7"
+                    cy="7"
+                    r="5.5"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                />
+                <path
+                    d="M11 11L14.5 14.5"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                />
+            </svg>
 
-    <div class="lightbox-overlay" id="lightboxOverlay">
-        <button class="lightbox-close" id="lightboxClose">✕</button>
-        <img id="lightboxImage" src="" alt="Enlarged view" />
+            <input
+                class="search-input"
+                id="searchInput"
+                type="text"
+                placeholder="Search assets…"
+            />
+        </div>
+
     </div>
 
-    <script type="module">
-        // ---------- RESET ----------
-        if (window.location.search.includes('reset=1')) {
-            localStorage.clear();
-            sessionStorage.clear();
-            document.cookie.split(';').forEach(c => {
-                document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=; expires=' + new Date().toUTCString() + '; path=/');
-            });
-            window.location.replace(window.location.pathname + '?t=' + Date.now());
-        }
+    <div class="asset-grid" id="assetGrid">
+        <div class="loading-grid">
+            <div class="spinner"></div>
+            <span style="color:var(--muted);font-size:14px;">
+                Loading assets...
+            </span>
+        </div>
+    </div>
 
-        const CACHE_KEY = 'orion_drive_asset_cache_v11';
-        const CACHE_TTL = 3600000;
+</section>
 
-        // Remove all old cache keys
-        const oldKeys = [];
-        for (let i = 0; i < 20; i++) {
-            oldKeys.push(`orion_drive_asset_cache${i > 0 ? '_v' + i : ''}`);
-        }
-        oldKeys.forEach(key => {
-            if (localStorage.getItem(key)) {
-                console.log(`🗑️ Removing old cache: ${key}`);
-                localStorage.removeItem(key);
-            }
+<div class="lightbox-overlay" id="lightboxOverlay">
+    <button class="lightbox-close" id="lightboxClose">✕</button>
+    <img id="lightboxImage" src="" alt="Enlarged view" />
+</div>
+
+
+<!-- ==================== ASSETS ==================== -->
+
+<script type="module">
+
+    // ---------- RESET ----------
+
+    if (window.location.search.includes('reset=1')) {
+
+        localStorage.clear();
+        sessionStorage.clear();
+
+        document.cookie.split(';').forEach(c => {
+            document.cookie = c
+                .replace(/^ +/, '')
+                .replace(/=.*/, '=; expires=' + new Date().toUTCString() + '; path=/');
         });
 
-        // ---------- UTILITY ----------
-        const formatSize = bytes => bytes ? (bytes < 1048576 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1048576).toFixed(1)+' MB') : '—';
-        const getExt = name => name.split('.').pop().toLowerCase();
-        const getBase = name => name.replace(/\.[^.]+$/, '');
-        const isFolder = f => f.mimeType === 'application/vnd.google-apps.folder';
-        const getType = (mime, name) => {
-            if (mime.startsWith('image/')) return 'image';
-            if (mime.startsWith('audio/')) return 'sound';
-            const ext = getExt(name);
-            if (['glb','gltf','obj','stl','fbx'].includes(ext) || mime.includes('model') || mime === 'application/octet-stream') return 'model';
-            return 'other';
-        };
+        window.location.replace(
+            window.location.pathname + '?t=' + Date.now()
+        );
+    }
 
-        // ---------- PROXY URL with filename ----------
-        const getProxyUrl = (id, mode, filename) => {
-            const encodedName = encodeURIComponent(filename || 'download');
-            return `/api/download?id=${id}&mode=${mode}&filename=${encodedName}`;
-        };
 
-        // ---------- BACKEND ASSETS CALL ----------
-        async function fetchAssetsFromBackend() {
-            const res = await fetch('/api/assets');
-            if (!res.ok) throw new Error(`Backend error: ${res.status}`);
-            const data = await res.json();
-            return data;
+    // ---------- CACHE ----------
+
+    const CACHE_KEY = 'orion_drive_asset_cache_v11';
+    const CACHE_TTL = 3600000;
+
+    const oldKeys = [];
+
+    for (let i = 0; i < 20; i++) {
+        oldKeys.push(
+            `orion_drive_asset_cache${i > 0 ? '_v' + i : ''}`
+        );
+    }
+
+    oldKeys.forEach(key => {
+
+        if (localStorage.getItem(key)) {
+            console.log(`🗑️ Removing old cache: ${key}`);
+            localStorage.removeItem(key);
         }
 
-        // ---------- STATE ----------
-        let allAssets = [];
-        let currentFilter = 'all';
-        let currentSearch = '';
-        let modelPreviewMap = new Map();
-        let currentAudio = null, currentPlayingBtn = null;
+    });
 
-        // ---------- DOM REFS ----------
-        const grid = document.getElementById('assetGrid');
-        const filterPills = document.querySelectorAll('.filter-pill');
-        const searchInput = document.getElementById('searchInput');
-        const overlay = document.getElementById('lightboxOverlay');
-        const lightboxImg = document.getElementById('lightboxImage');
-        const closeBtn = document.getElementById('lightboxClose');
 
-        // ---------- AUDIO ----------
-        function stopAudio() {
-            if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
-            if (currentPlayingBtn) { currentPlayingBtn.textContent = '▶ Preview'; currentPlayingBtn.classList.remove('playing'); currentPlayingBtn = null; }
+    // ---------- UTILITY ----------
+
+    const formatSize = bytes => {
+
+        if (!bytes) return '—';
+
+        return bytes < 1048576
+            ? (bytes / 1024).toFixed(1) + ' KB'
+            : (bytes / 1048576).toFixed(1) + ' MB';
+
+    };
+
+
+    const getExt = name => {
+
+        if (!name || !name.includes('.')) {
+            return '';
         }
 
-        function toggleAudio(url, btn) {
-            if (currentPlayingBtn === btn) { stopAudio(); return; }
+        return name
+            .split('.')
+            .pop()
+            .toLowerCase();
+
+    };
+
+
+    const getBase = name => {
+
+        return name.replace(/\.[^.]+$/, '');
+
+    };
+
+
+    const isFolder = f => {
+
+        return f.mimeType === 'application/vnd.google-apps.folder';
+
+    };
+
+
+    const getType = (mime, name) => {
+
+        if (mime.startsWith('image/')) {
+            return 'image';
+        }
+
+        if (mime.startsWith('audio/')) {
+            return 'sound';
+        }
+
+        const ext = getExt(name);
+
+        if (
+            ['glb', 'gltf', 'obj', 'stl', 'fbx'].includes(ext) ||
+            mime.includes('model') ||
+            mime === 'application/octet-stream'
+        ) {
+            return 'model';
+        }
+
+        return 'other';
+
+    };
+
+
+    // ---------- PROXY URL ----------
+
+    const getProxyUrl = (id, mode, filename) => {
+
+        const encodedName = encodeURIComponent(
+            filename || 'download'
+        );
+
+        return `/api/download?id=${encodeURIComponent(id)}&mode=${encodeURIComponent(mode)}&filename=${encodedName}`;
+
+    };
+
+
+    // ---------- BACKEND ASSETS CALL ----------
+
+    async function fetchAssetsFromBackend() {
+
+        const res = await fetch('/api/assets');
+
+        if (!res.ok) {
+            throw new Error(`Backend error: ${res.status}`);
+        }
+
+        return await res.json();
+
+    }
+
+
+    // ---------- STATE ----------
+
+    let allAssets = [];
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let modelPreviewMap = new Map();
+
+    let currentAudio = null;
+    let currentPlayingBtn = null;
+
+
+    // ---------- DOM REFS ----------
+
+    const grid = document.getElementById('assetGrid');
+    const filterPills = document.querySelectorAll('.filter-pill');
+    const searchInput = document.getElementById('searchInput');
+
+    const overlay = document.getElementById('lightboxOverlay');
+    const lightboxImg = document.getElementById('lightboxImage');
+    const closeBtn = document.getElementById('lightboxClose');
+
+
+    // ---------- AUDIO ----------
+
+    function stopAudio() {
+
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+            currentAudio = null;
+        }
+
+        if (currentPlayingBtn) {
+            currentPlayingBtn.textContent = '▶ Preview';
+            currentPlayingBtn.classList.remove('playing');
+            currentPlayingBtn = null;
+        }
+
+    }
+
+
+    function toggleAudio(url, btn) {
+
+        if (currentPlayingBtn === btn) {
             stopAudio();
-            currentAudio = new Audio(url);
-            currentAudio.crossOrigin = 'anonymous';
-            currentAudio.addEventListener('ended', () => stopAudio());
-            currentAudio.addEventListener('error', (e) => {
-                console.warn('Audio error:', e);
-                stopAudio();
-                alert('Preview failed. Try downloading the file instead.');
-            });
-            currentAudio.play().catch(err => {
-                console.warn('Play failed:', err);
-                stopAudio();
-                alert('Preview failed. Try downloading the file.');
-            });
-            btn.textContent = '⏹ Stop';
-            btn.classList.add('playing');
-            currentPlayingBtn = btn;
+            return;
         }
 
-        // ---------- LIGHTBOX ----------
-        function openLightbox(src) {
-            if (!src) return;
-            lightboxImg.src = src;
-            overlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeLightbox() {
-            overlay.classList.remove('open');
-            document.body.style.overflow = '';
-            lightboxImg.src = '';
-        }
-        closeBtn.addEventListener('click', closeLightbox);
-        overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+        stopAudio();
 
-        // ---------- DOWNLOAD ----------
-        function downloadFile(url) {
-            // Open in new tab – proxy will handle the filename
-            window.open(url, '_blank');
-        }
+        currentAudio = new Audio(url);
+        currentAudio.crossOrigin = 'anonymous';
 
-        // ---------- LOAD ASSETS ----------
-        async function loadAssets() {
-            const cachedData = localStorage.getItem(CACHE_KEY);
-            if (cachedData) {
-                try {
-                    const parsed = JSON.parse(cachedData);
-                    const now = Date.now();
-                    if (parsed.timestamp > now) {
-                        localStorage.removeItem(CACHE_KEY);
-                    } else if (now - parsed.timestamp < CACHE_TTL) {
-                        console.log('✅ Serving from cache');
-                        allAssets = parsed.allAssets;
-                        modelPreviewMap = new Map(parsed.modelPreviewMap);
-                        const indicator = document.createElement('div');
-                        indicator.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);padding:4px 0;margin-top:-20px;opacity:0.6;';
-                        const ageMin = Math.round((now - parsed.timestamp) / 60000);
-                        indicator.textContent = `⚡ Loaded from cache • ${ageMin} min ago`;
-                        const existing = document.querySelector('.cache-indicator');
-                        if (existing) existing.remove();
-                        const section = document.querySelector('.browse-section');
-                        section.insertBefore(indicator, section.firstChild);
-                        indicator.classList.add('cache-indicator');
-                        renderAssets();
-                        return;
-                    }
-                } catch (e) {}
-            }
-
-            try {
-                grid.innerHTML = `<div class="loading-grid"><div class="spinner"></div><span style="color:var(--muted);font-size:14px;">Loading assets...</span></div>`;
-                const { assets, previews } = await fetchAssetsFromBackend();
-
-                // Build model previews
-                modelPreviewMap.clear();
-                previews.forEach(f => {
-                    const base = getBase(f.name);
-                    modelPreviewMap.set(base, f.thumbnailLink || f.webContentLink || null);
-                });
-
-                const filtered = assets.filter(f => !isFolder(f));
-                allAssets = filtered.map(f => {
-                    const base = getBase(f.name);
-                    const mime = f.mimeType || '';
-                    const type = getType(mime, f.name);
-                    const thumbLink = f.thumbnailLink || null;
-                    const publicLink = f.webContentLink || null;
-
-                    let displayUrl = null;
-                    if (type === 'image') displayUrl = thumbLink || publicLink;
-                    else if (type === 'model') displayUrl = modelPreviewMap.get(base) || thumbLink || publicLink;
-
-                    return {
-                        id: f.id,
-                        title: f.name,
-                        type,
-                        mimeType: mime,
-                        size: f.size ? parseInt(f.size) : null,
-                        displayUrl: displayUrl,
-                        // Preview: proxy with filename
-                        previewUrl: (type === 'sound') ? getProxyUrl(f.id, 'preview', f.name) : null,
-                        // Download: proxy with filename
-                        downloadUrl: getProxyUrl(f.id, 'download', f.name)
-                    };
-                });
-
-                const cachePayload = {
-                    timestamp: Date.now(),
-                    allAssets,
-                    modelPreviewMap: Array.from(modelPreviewMap.entries())
-                };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cachePayload));
-                console.log(`💾 Saved ${allAssets.length} assets to cache.`);
-
-                const existing = document.querySelector('.cache-indicator');
-                if (existing) existing.remove();
-                renderAssets();
-            } catch (error) {
-                console.error(error);
-                grid.innerHTML = `<div class="no-results"><div class="big-icon">⚠️</div><h3>Could not load assets</h3><p>${error.message}</p></div>`;
-            }
-        }
-
-        // ---------- RENDER ----------
-        function renderAssets() {
-            const filtered = allAssets.filter(a => {
-                const matchType = currentFilter === 'all' || a.type === currentFilter;
-                const matchSearch = a.title.toLowerCase().includes(currentSearch.toLowerCase());
-                return matchType && matchSearch;
-            });
-
-            document.querySelectorAll('.filter-pill').forEach(pill => {
-                const type = pill.dataset.filter;
-                const count = type === 'all' ? allAssets.length : allAssets.filter(a => a.type === type).length;
-                pill.querySelector('.count').textContent = count;
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="no-results"><div class="big-icon">🔍</div><h3>No assets found</h3><p>${allAssets.length === 0 ? 'No files in selected folders.' : 'Try adjusting filters or search.'}</p></div>`;
-                return;
-            }
-
-            grid.innerHTML = filtered.map(asset => {
-                const isImage = asset.type === 'image';
-                const isSound = asset.type === 'sound';
-                const isModel = asset.type === 'model';
-                let thumb = '';
-                if (isImage) {
-                    const src = asset.displayUrl || '';
-                    thumb = src ? `<img src="${src}" alt="${asset.title}" loading="lazy" onerror="this.classList.add('error'); this.nextElementSibling.style.display='flex';" /><div class="asset-icon-fallback">🖼️</div>` : `<span class="asset-icon">🖼️</span>`;
-                } else if (isSound) thumb = `<span class="asset-icon">🎵</span>`;
-                else if (isModel) {
-                    const src = asset.displayUrl || '';
-                    thumb = src ? `<img src="${src}" alt="${asset.title}" loading="lazy" onerror="this.classList.add('error'); this.nextElementSibling.style.display='flex';" /><div class="asset-icon-fallback">🧊</div>` : `<span class="asset-icon">🧊</span>`;
-                } else thumb = `<span class="asset-icon">📄</span>`;
-
-                const dlUrl = asset.downloadUrl || '#';
-                let actions = `
-                    <button class="asset-download-btn" data-url="${dlUrl}" data-name="${asset.title}">
-                        <svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><path d="M8 1v10M4 7l4 4 4-4"/><path d="M1 13h14"/></svg>
-                        Download
-                    </button>
-                `;
-                if (isSound && asset.previewUrl) {
-                    actions += `<button class="asset-preview-btn" data-url="${asset.previewUrl}">▶ Preview</button>`;
-                }
-                if (isImage && asset.displayUrl) {
-                    actions += `<button class="asset-enlarge-btn" data-url="${asset.displayUrl}">Enlarge</button>`;
-                }
-
-                return `
-                    <div class="asset-card" data-id="${asset.id}">
-                        <div class="asset-thumb">
-                            ${thumb}
-                            <span class="asset-badge ${asset.type}">${asset.type.charAt(0).toUpperCase()+asset.type.slice(1)}</span>
-                        </div>
-                        <div class="asset-info">
-                            <div class="asset-title">${asset.title}</div>
-                            <div class="asset-meta"><span>${formatSize(asset.size)}</span></div>
-                            <div class="asset-actions">${actions}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            grid.querySelectorAll('.asset-download-btn').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const url = btn.dataset.url;
-                    if (url && url !== '#') {
-                        downloadFile(url);
-                    } else {
-                        alert('Download link not available.');
-                    }
-                });
-            });
-            grid.querySelectorAll('.asset-preview-btn').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const url = btn.dataset.url;
-                    if (url) toggleAudio(url, btn);
-                    else alert('Preview not available.');
-                });
-            });
-            grid.querySelectorAll('.asset-enlarge-btn').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const url = btn.dataset.url;
-                    if (url) openLightbox(url);
-                    else alert('No image to enlarge.');
-                });
-            });
-        }
-
-        // ---------- FILTER & SEARCH ----------
-        filterPills.forEach(pill => {
-            pill.addEventListener('click', () => {
-                stopAudio();
-                filterPills.forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-                currentFilter = pill.dataset.filter;
-                renderAssets();
-            });
-        });
-        searchInput.addEventListener('input', e => {
+        currentAudio.addEventListener('ended', () => {
             stopAudio();
-            currentSearch = e.target.value;
-            renderAssets();
         });
 
-        // ---------- START ----------
-        loadAssets();
+        currentAudio.addEventListener('error', e => {
 
-        // ---------- Clear Cache shortcut ----------
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-                localStorage.removeItem(CACHE_KEY);
-                alert('Cache cleared! Refreshing...');
-                location.reload();
-            }
+            console.warn('Audio error:', e);
+
+            stopAudio();
+
+            alert(
+                'Preview failed. Try downloading the file instead.'
+            );
+
         });
 
-        console.log('📦 Cache key:', CACHE_KEY);
-        console.log('💡 Press Ctrl+Shift+C to clear cache and reload');
-        console.log('🔗 To force a full reset, visit: ?reset=1');
-    </script>
+        currentAudio.play().catch(err => {
 
-    <!-- ==================== CURSOR & PROFILE ==================== -->
-    <script>
-        (function initCursor() {
-            const ring = document.getElementById('cursorRing');
-            let mx = 0, my = 0;
-            let rx = 0, ry = 0;
-            let hover = false;
+            console.warn('Play failed:', err);
 
-            document.addEventListener('mousemove', e => {
-                mx = e.clientX;
-                my = e.clientY;
-                const target = e.target;
-                hover = !!target.closest('a, button, .pill, .primary-button, .login-nav-btn, .profile-container, .filter-pill, .asset-download-btn, .asset-preview-btn, .asset-enlarge-btn, .asset-card');
-                if (hover) {
-                    ring.style.width = '40px';
-                    ring.style.height = '40px';
-                    ring.style.border = '2px solid rgba(255,255,255,0.4)';
-                    ring.style.background = 'rgba(255,255,255,0.08)';
-                    ring.style.backdropFilter = 'blur(2px)';
-                    ring.style.mixBlendMode = 'normal';
-                } else {
-                    ring.style.width = '24px';
-                    ring.style.height = '24px';
-                    ring.style.border = 'none';
-                    ring.style.background = 'white';
-                    ring.style.backdropFilter = 'none';
-                    ring.style.mixBlendMode = 'difference';
-                }
-                document.body.style.cursor = 'none';
-            });
+            stopAudio();
 
-            function anim() {
-                rx += (mx - rx) * 0.18;
-                ry += (my - ry) * 0.18;
-                ring.style.left = (rx - ring.offsetWidth / 2) + 'px';
-                ring.style.top = (ry - ring.offsetHeight / 2) + 'px';
-                requestAnimationFrame(anim);
+            alert(
+                'Preview failed. Try downloading the file.'
+            );
+
+        });
+
+        btn.textContent = '⏹ Stop';
+        btn.classList.add('playing');
+
+        currentPlayingBtn = btn;
+
+    }
+
+
+    // ---------- LIGHTBOX ----------
+
+    function openLightbox(src) {
+
+        if (!src) return;
+
+        lightboxImg.src = src;
+
+        overlay.classList.add('open');
+
+        document.body.style.overflow = 'hidden';
+
+    }
+
+
+    function closeLightbox() {
+
+        overlay.classList.remove('open');
+
+        document.body.style.overflow = '';
+
+        lightboxImg.src = '';
+
+    }
+
+
+    closeBtn.addEventListener(
+        'click',
+        closeLightbox
+    );
+
+
+    overlay.addEventListener('click', e => {
+
+        if (e.target === overlay) {
+            closeLightbox();
+        }
+
+    });
+
+
+    document.addEventListener('keydown', e => {
+
+        if (e.key === 'Escape') {
+            closeLightbox();
+        }
+
+    });
+
+
+    // ============================================================
+    // DOWNLOAD
+    // ============================================================
+
+    async function downloadFile(url, filename) {
+
+        try {
+
+            if (!url || url === '#') {
+                throw new Error('Download URL is missing.');
             }
 
-            document.documentElement.style.cursor = 'none';
-            document.body.style.cursor = 'none';
-            const style = document.createElement('style');
-            style.textContent = `
-                *,
-                *::before,
-                *::after {
-                    cursor: none !important;
-                }
-            `;
-            document.head.appendChild(style);
 
-            document.addEventListener('mouseleave', () => { ring.style.opacity = '0'; });
-            document.addEventListener('mouseenter', () => { ring.style.opacity = '1'; });
-
-            anim();
-        })();
+            // Make sure we have a usable filename
+            let finalFilename =
+                filename ||
+                'download';
 
 
-        (function initProfile() {
-            const AUTH_BACKEND_URL = window.location.origin;
-            const container = document.getElementById('navbarProfile');
+            // Remove problematic characters
+            finalFilename = finalFilename
+                .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
+                .trim();
 
-            function render() {
-                const user = JSON.parse(localStorage.getItem('discordUser'));
-                if (user) {
-                    const avatar = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
-                    container.innerHTML = `
-                        <div class="profile-container" id="profileDropdown">
-                            <img src="${avatar}" alt="Avatar" />
-                            <span class="username">${user.username}</span>
-                            <svg class="chevron" width="12" height="12" viewBox="0 0 12 12"><path d="M6 8L1 3L11 3L6 8Z" fill="white"/></svg>
-                            <div class="dropdown-menu" id="dropdownMenu">
-                                <a href="#" class="logout-item" onclick="logout()">Logout</a>
-                            </div>
-                        </div>
-                    `;
-                    const dd = document.getElementById('profileDropdown');
-                    const menu = document.getElementById('dropdownMenu');
-                    dd.addEventListener('click', e => {
-                        e.stopPropagation();
-                        dd.classList.toggle('open');
-                        menu.classList.toggle('show');
-                    });
-                    document.addEventListener('click', () => {
-                        dd.classList.remove('open');
-                        menu.classList.remove('show');
-                    });
-                } else {
-                    container.innerHTML = `
-                        <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
-                            <svg width="16" height="16" viewBox="0 0 28 28"><path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/><path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/></svg>
-                            Login
-                        </a>
-                    `;
-                }
+
+            if (!finalFilename) {
+                finalFilename = 'download';
             }
 
-            window.logout = function() {
-                localStorage.removeItem('discordUser');
-                window.location.href = window.location.pathname;
+
+            // Fetch the file from our API
+            const response = await fetch(url);
+
+
+            if (!response.ok) {
+                throw new Error(
+                    `Download failed: ${response.status}`
+                );
+            }
+
+
+            // Get the file as a Blob
+            const blob = await response.blob();
+
+
+            // ----------------------------------------------------
+            // Determine the correct extension
+            // ----------------------------------------------------
+
+            const mimeExtensions = {
+
+                'image/png': '.png',
+                'image/jpeg': '.jpg',
+                'image/jpg': '.jpg',
+                'image/webp': '.webp',
+                'image/gif': '.gif',
+                'image/bmp': '.bmp',
+                'image/svg+xml': '.svg',
+                'image/avif': '.avif',
+                'image/tiff': '.tiff',
+
+                'audio/mpeg': '.mp3',
+                'audio/mp3': '.mp3',
+                'audio/wav': '.wav',
+                'audio/x-wav': '.wav',
+                'audio/ogg': '.ogg',
+                'audio/mp4': '.m4a',
+                'audio/aac': '.aac',
+                'audio/flac': '.flac',
+                'audio/webm': '.weba',
+
+                'model/gltf-binary': '.glb',
+                'model/gltf+json': '.gltf',
+
             };
 
-            (function handleRedirect() {
-                const params = new URLSearchParams(window.location.search);
-                const username = params.get('username');
-                const id = params.get('id');
-                const avatar = params.get('avatar');
-                if (username && id) {
-                    localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
-                    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-                }
-            })();
 
-            render();
+            // Check whether filename already has an extension
+            const hasExtension =
+                /\.[a-z0-9]{1,10}$/i.test(finalFilename);
+
+
+            if (!hasExtension) {
+
+                const extension =
+                    mimeExtensions[blob.type];
+
+                if (extension) {
+                    finalFilename += extension;
+                }
+
+            }
+
+
+            // ----------------------------------------------------
+            // Create a Blob URL
+            // ----------------------------------------------------
+
+            const blobUrl =
+                URL.createObjectURL(blob);
+
+
+            // ----------------------------------------------------
+            // Create a temporary download link
+            // ----------------------------------------------------
+
+            const link =
+                document.createElement('a');
+
+            link.href = blobUrl;
+
+            // THIS is what Chromium needs
+            link.download = finalFilename;
+
+            link.style.display = 'none';
+
+
+            document.body.appendChild(link);
+
+
+            // Trigger the download
+            link.click();
+
+
+            // Clean up
+            link.remove();
+
+
+            // Give the browser time to start the download
+            setTimeout(() => {
+
+                URL.revokeObjectURL(blobUrl);
+
+            }, 5000);
+
+
+            console.log(
+                `⬇️ Downloaded: ${finalFilename}`
+            );
+
+        } catch (error) {
+
+            console.error(
+                'Download error:',
+                error
+            );
+
+            alert(
+                'Download failed. Please try again.'
+            );
+
+        }
+
+    }
+
+
+    // ---------- LOAD ASSETS ----------
+
+    async function loadAssets() {
+
+        const cachedData =
+            localStorage.getItem(CACHE_KEY);
+
+
+        if (cachedData) {
+
+            try {
+
+                const parsed =
+                    JSON.parse(cachedData);
+
+                const now = Date.now();
+
+
+                if (parsed.timestamp > now) {
+
+                    localStorage.removeItem(
+                        CACHE_KEY
+                    );
+
+                }
+
+                else if (
+                    now - parsed.timestamp <
+                    CACHE_TTL
+                ) {
+
+                    console.log(
+                        '✅ Serving from cache'
+                    );
+
+
+                    allAssets =
+                        parsed.allAssets;
+
+                    modelPreviewMap =
+                        new Map(
+                            parsed.modelPreviewMap
+                        );
+
+
+                    const indicator =
+                        document.createElement('div');
+
+
+                    indicator.style.cssText =
+                        'text-align:center;font-size:12px;color:var(--muted);padding:4px 0;margin-top:-20px;opacity:0.6;';
+
+
+                    const ageMin =
+                        Math.round(
+                            (now - parsed.timestamp) /
+                            60000
+                        );
+
+
+                    indicator.textContent =
+                        `⚡ Loaded from cache • ${ageMin} min ago`;
+
+
+                    const existing =
+                        document.querySelector(
+                            '.cache-indicator'
+                        );
+
+
+                    if (existing) {
+                        existing.remove();
+                    }
+
+
+                    const section =
+                        document.querySelector(
+                            '.browse-section'
+                        );
+
+
+                    section.insertBefore(
+                        indicator,
+                        section.firstChild
+                    );
+
+
+                    indicator.classList.add(
+                        'cache-indicator'
+                    );
+
+
+                    renderAssets();
+
+                    return;
+
+                }
+
+            } catch (e) {
+
+                console.warn(
+                    'Cache parsing failed:',
+                    e
+                );
+
+            }
+
+        }
+
+
+        try {
+
+            grid.innerHTML = `
+                <div class="loading-grid">
+                    <div class="spinner"></div>
+                    <span style="color:var(--muted);font-size:14px;">
+                        Loading assets...
+                    </span>
+                </div>
+            `;
+
+
+            const {
+                assets,
+                previews
+            } = await fetchAssetsFromBackend();
+
+
+            // Build model previews
+            modelPreviewMap.clear();
+
+
+            previews.forEach(f => {
+
+                const base =
+                    getBase(f.name);
+
+                modelPreviewMap.set(
+                    base,
+                    f.thumbnailLink ||
+                    f.webContentLink ||
+                    null
+                );
+
+            });
+
+
+            const filtered =
+                assets.filter(
+                    f => !isFolder(f)
+                );
+
+
+            allAssets =
+                filtered.map(f => {
+
+                    const base =
+                        getBase(f.name);
+
+                    const mime =
+                        f.mimeType || '';
+
+                    const type =
+                        getType(
+                            mime,
+                            f.name
+                        );
+
+                    const thumbLink =
+                        f.thumbnailLink ||
+                        null;
+
+                    const publicLink =
+                        f.webContentLink ||
+                        null;
+
+
+                    let displayUrl =
+                        null;
+
+
+                    if (type === 'image') {
+
+                        displayUrl =
+                            thumbLink ||
+                            publicLink;
+
+                    }
+
+                    else if (type === 'model') {
+
+                        displayUrl =
+                            modelPreviewMap.get(base) ||
+                            thumbLink ||
+                            publicLink;
+
+                    }
+
+
+                    return {
+
+                        id: f.id,
+
+                        title: f.name,
+
+                        type,
+
+                        mimeType: mime,
+
+                        size: f.size
+                            ? parseInt(f.size)
+                            : null,
+
+                        displayUrl,
+
+                        previewUrl:
+                            type === 'sound'
+                                ? getProxyUrl(
+                                    f.id,
+                                    'preview',
+                                    f.name
+                                )
+                                : null,
+
+                        downloadUrl:
+                            getProxyUrl(
+                                f.id,
+                                'download',
+                                f.name
+                            )
+
+                    };
+
+                });
+
+
+            const cachePayload = {
+
+                timestamp: Date.now(),
+
+                allAssets,
+
+                modelPreviewMap:
+                    Array.from(
+                        modelPreviewMap.entries()
+                    )
+
+            };
+
+
+            localStorage.setItem(
+                CACHE_KEY,
+                JSON.stringify(
+                    cachePayload
+                )
+            );
+
+
+            console.log(
+                `💾 Saved ${allAssets.length} assets to cache.`
+            );
+
+
+            const existing =
+                document.querySelector(
+                    '.cache-indicator'
+                );
+
+
+            if (existing) {
+                existing.remove();
+            }
+
+
+            renderAssets();
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            grid.innerHTML = `
+                <div class="no-results">
+                    <div class="big-icon">⚠️</div>
+                    <h3>Could not load assets</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    // ---------- RENDER ----------
+
+    function renderAssets() {
+
+        const filtered =
+            allAssets.filter(a => {
+
+                const matchType =
+                    currentFilter === 'all' ||
+                    a.type === currentFilter;
+
+
+                const matchSearch =
+                    a.title
+                        .toLowerCase()
+                        .includes(
+                            currentSearch.toLowerCase()
+                        );
+
+
+                return (
+                    matchType &&
+                    matchSearch
+                );
+
+            });
+
+
+        document
+            .querySelectorAll('.filter-pill')
+            .forEach(pill => {
+
+                const type =
+                    pill.dataset.filter;
+
+
+                const count =
+                    type === 'all'
+                        ? allAssets.length
+                        : allAssets.filter(
+                            a => a.type === type
+                        ).length;
+
+
+                pill.querySelector(
+                    '.count'
+                ).textContent = count;
+
+            });
+
+
+        if (filtered.length === 0) {
+
+            grid.innerHTML = `
+                <div class="no-results">
+                    <div class="big-icon">🔍</div>
+                    <h3>No assets found</h3>
+                    <p>
+                        ${
+                            allAssets.length === 0
+                                ? 'No files in selected folders.'
+                                : 'Try adjusting filters or search.'
+                        }
+                    </p>
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        grid.innerHTML =
+            filtered.map(asset => {
+
+                const isImage =
+                    asset.type === 'image';
+
+                const isSound =
+                    asset.type === 'sound';
+
+                const isModel =
+                    asset.type === 'model';
+
+
+                let thumb = '';
+
+
+                if (isImage) {
+
+                    const src =
+                        asset.displayUrl || '';
+
+
+                    thumb = src
+                        ? `
+                            <img
+                                src="${src}"
+                                alt="${asset.title}"
+                                loading="lazy"
+                                onerror="this.classList.add('error'); this.nextElementSibling.style.display='flex';"
+                            />
+
+                            <div
+                                class="asset-icon-fallback"
+                            >
+                                🖼️
+                            </div>
+                        `
+                        : `
+                            <span class="asset-icon">
+                                🖼️
+                            </span>
+                        `;
+
+                }
+
+
+                else if (isSound) {
+
+                    thumb = `
+                        <span class="asset-icon">
+                            🎵
+                        </span>
+                    `;
+
+                }
+
+
+                else if (isModel) {
+
+                    const src =
+                        asset.displayUrl || '';
+
+
+                    thumb = src
+                        ? `
+                            <img
+                                src="${src}"
+                                alt="${asset.title}"
+                                loading="lazy"
+                                onerror="this.classList.add('error'); this.nextElementSibling.style.display='flex';"
+                            />
+
+                            <div
+                                class="asset-icon-fallback"
+                            >
+                                🧊
+                            </div>
+                        `
+                        : `
+                            <span class="asset-icon">
+                                🧊
+                            </span>
+                        `;
+
+                }
+
+
+                else {
+
+                    thumb = `
+                        <span class="asset-icon">
+                            📄
+                        </span>
+                    `;
+
+                }
+
+
+                const dlUrl =
+                    asset.downloadUrl || '#';
+
+
+                const safeTitle =
+                    asset.title
+                        .replace(/"/g, '&quot;');
+
+
+                let actions = `
+
+                    <button
+                        class="asset-download-btn"
+                        data-url="${dlUrl}"
+                        data-name="${safeTitle}"
+                    >
+
+                        <svg
+                            viewBox="0 0 16 16"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                        >
+                            <path d="M8 1v10M4 7l4 4 4-4"/>
+                            <path d="M1 13h14"/>
+                        </svg>
+
+                        Download
+
+                    </button>
+
+                `;
+
+
+                if (
+                    isSound &&
+                    asset.previewUrl
+                ) {
+
+                    actions += `
+
+                        <button
+                            class="asset-preview-btn"
+                            data-url="${asset.previewUrl}"
+                        >
+                            ▶ Preview
+                        </button>
+
+                    `;
+
+                }
+
+
+                if (
+                    isImage &&
+                    asset.displayUrl
+                ) {
+
+                    actions += `
+
+                        <button
+                            class="asset-enlarge-btn"
+                            data-url="${asset.displayUrl}"
+                        >
+                            Enlarge
+                        </button>
+
+                    `;
+
+                }
+
+
+                return `
+
+                    <div
+                        class="asset-card"
+                        data-id="${asset.id}"
+                    >
+
+                        <div class="asset-thumb">
+
+                            ${thumb}
+
+                            <span
+                                class="asset-badge ${asset.type}"
+                            >
+                                ${
+                                    asset.type
+                                        .charAt(0)
+                                        .toUpperCase() +
+                                    asset.type.slice(1)
+                                }
+                            </span>
+
+                        </div>
+
+
+                        <div class="asset-info">
+
+                            <div class="asset-title">
+                                ${asset.title}
+                            </div>
+
+                            <div class="asset-meta">
+                                <span>
+                                    ${formatSize(asset.size)}
+                                </span>
+                            </div>
+
+                            <div class="asset-actions">
+
+                                ${actions}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            }).join('');
+
+
+        // ---------- DOWNLOAD BUTTONS ----------
+
+        grid
+            .querySelectorAll(
+                '.asset-download-btn'
+            )
+            .forEach(btn => {
+
+                btn.addEventListener(
+                    'click',
+                    async e => {
+
+                        e.stopPropagation();
+
+
+                        const url =
+                            btn.dataset.url;
+
+
+                        const filename =
+                            btn.dataset.name;
+
+
+                        if (
+                            url &&
+                            url !== '#'
+                        ) {
+
+                            // IMPORTANT:
+                            // Explicitly pass the filename
+                            // to the download function.
+                            await downloadFile(
+                                url,
+                                filename
+                            );
+
+                        }
+
+                        else {
+
+                            alert(
+                                'Download link not available.'
+                            );
+
+                        }
+
+                    }
+                );
+
+            });
+
+
+        // ---------- PREVIEW BUTTONS ----------
+
+        grid
+            .querySelectorAll(
+                '.asset-preview-btn'
+            )
+            .forEach(btn => {
+
+                btn.addEventListener(
+                    'click',
+                    e => {
+
+                        e.stopPropagation();
+
+
+                        const url =
+                            btn.dataset.url;
+
+
+                        if (url) {
+
+                            toggleAudio(
+                                url,
+                                btn
+                            );
+
+                        }
+
+                        else {
+
+                            alert(
+                                'Preview not available.'
+                            );
+
+                        }
+
+                    }
+                );
+
+            });
+
+
+        // ---------- ENLARGE BUTTONS ----------
+
+        grid
+            .querySelectorAll(
+                '.asset-enlarge-btn'
+            )
+            .forEach(btn => {
+
+                btn.addEventListener(
+                    'click',
+                    e => {
+
+                        e.stopPropagation();
+
+
+                        const url =
+                            btn.dataset.url;
+
+
+                        if (url) {
+
+                            openLightbox(url);
+
+                        }
+
+                        else {
+
+                            alert(
+                                'No image to enlarge.'
+                            );
+
+                        }
+
+                    }
+                );
+
+            });
+
+    }
+
+
+    // ---------- FILTER & SEARCH ----------
+
+    filterPills.forEach(pill => {
+
+        pill.addEventListener(
+            'click',
+            () => {
+
+                stopAudio();
+
+
+                filterPills.forEach(
+                    p => p.classList.remove('active')
+                );
+
+
+                pill.classList.add('active');
+
+
+                currentFilter =
+                    pill.dataset.filter;
+
+
+                renderAssets();
+
+            }
+        );
+
+    });
+
+
+    searchInput.addEventListener(
+        'input',
+        e => {
+
+            stopAudio();
+
+            currentSearch =
+                e.target.value;
+
+            renderAssets();
+
+        }
+    );
+
+
+    // ---------- START ----------
+
+    loadAssets();
+
+
+    // ---------- CLEAR CACHE SHORTCUT ----------
+
+    document.addEventListener(
+        'keydown',
+        e => {
+
+            if (
+                e.ctrlKey &&
+                e.shiftKey &&
+                e.key === 'C'
+            ) {
+
+                localStorage.removeItem(
+                    CACHE_KEY
+                );
+
+                alert(
+                    'Cache cleared! Refreshing...'
+                );
+
+                location.reload();
+
+            }
+
+        }
+    );
+
+
+    console.log(
+        '📦 Cache key:',
+        CACHE_KEY
+    );
+
+    console.log(
+        '💡 Press Ctrl+Shift+C to clear cache and reload'
+    );
+
+    console.log(
+        '🔗 To force a full reset, visit: ?reset=1'
+    );
+
+</script>
+
+
+<!-- ==================== CURSOR ==================== -->
+
+<script>
+
+    (function initCursor() {
+
+        const ring =
+            document.getElementById(
+                'cursorRing'
+            );
+
+
+        let mx = 0;
+        let my = 0;
+
+        let rx = 0;
+        let ry = 0;
+
+        let hover = false;
+
+
+        document.addEventListener(
+            'mousemove',
+            e => {
+
+                mx = e.clientX;
+                my = e.clientY;
+
+
+                const target =
+                    e.target;
+
+
+                hover = !!target.closest(
+                    'a, button, .pill, .primary-button, .login-nav-btn, .profile-container, .filter-pill, .asset-download-btn, .asset-preview-btn, .asset-enlarge-btn, .asset-card'
+                );
+
+
+                if (hover) {
+
+                    ring.style.width =
+                        '40px';
+
+                    ring.style.height =
+                        '40px';
+
+                    ring.style.border =
+                        '2px solid rgba(255,255,255,0.4)';
+
+                    ring.style.background =
+                        'rgba(255,255,255,0.08)';
+
+                    ring.style.backdropFilter =
+                        'blur(2px)';
+
+                    ring.style.mixBlendMode =
+                        'normal';
+
+                }
+
+                else {
+
+                    ring.style.width =
+                        '24px';
+
+                    ring.style.height =
+                        '24px';
+
+                    ring.style.border =
+                        'none';
+
+                    ring.style.background =
+                        'white';
+
+                    ring.style.backdropFilter =
+                        'none';
+
+                    ring.style.mixBlendMode =
+                        'difference';
+
+                }
+
+
+                document.body.style.cursor =
+                    'none';
+
+            }
+        );
+
+
+        function anim() {
+
+            rx +=
+                (mx - rx) * 0.18;
+
+            ry +=
+                (my - ry) * 0.18;
+
+
+            ring.style.left =
+                (rx - ring.offsetWidth / 2) +
+                'px';
+
+
+            ring.style.top =
+                (ry - ring.offsetHeight / 2) +
+                'px';
+
+
+            requestAnimationFrame(
+                anim
+            );
+
+        }
+
+
+        document.documentElement.style.cursor =
+            'none';
+
+        document.body.style.cursor =
+            'none';
+
+
+        const style =
+            document.createElement(
+                'style'
+            );
+
+
+        style.textContent = `
+
+            *,
+            *::before,
+            *::after {
+                cursor: none !important;
+            }
+
+        `;
+
+
+        document.head.appendChild(
+            style
+        );
+
+
+        document.addEventListener(
+            'mouseleave',
+            () => {
+                ring.style.opacity = '0';
+            }
+        );
+
+
+        document.addEventListener(
+            'mouseenter',
+            () => {
+                ring.style.opacity = '1';
+            }
+        );
+
+
+        anim();
+
+    })();
+
+
+    // ==================== PROFILE ====================
+
+    (function initProfile() {
+
+        const AUTH_BACKEND_URL =
+            window.location.origin;
+
+
+        const container =
+            document.getElementById(
+                'navbarProfile'
+            );
+
+
+        function render() {
+
+            const storedUser =
+                localStorage.getItem(
+                    'discordUser'
+                );
+
+
+            let user = null;
+
+
+            try {
+
+                user =
+                    storedUser
+                        ? JSON.parse(storedUser)
+                        : null;
+
+            } catch (e) {
+
+                console.warn(
+                    'Invalid Discord user data'
+                );
+
+            }
+
+
+            if (user) {
+
+                const avatar =
+                    user.avatar
+
+                        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
+
+                        : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
+
+
+                container.innerHTML = `
+
+                    <div
+                        class="profile-container"
+                        id="profileDropdown"
+                    >
+
+                        <img
+                            src="${avatar}"
+                            alt="Avatar"
+                        />
+
+                        <span class="username">
+                            ${user.username}
+                        </span>
+
+                        <svg
+                            class="chevron"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                        >
+                            <path
+                                d="M6 8L1 3L11 3L6 8Z"
+                                fill="white"
+                            />
+                        </svg>
+
+
+                        <div
+                            class="dropdown-menu"
+                            id="dropdownMenu"
+                        >
+
+                            <a
+                                href="#"
+                                class="logout-item"
+                                onclick="logout(); return false;"
+                            >
+                                Logout
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+
+                const dd =
+                    document.getElementById(
+                        'profileDropdown'
+                    );
+
+
+                const menu =
+                    document.getElementById(
+                        'dropdownMenu'
+                    );
+
+
+                dd.addEventListener(
+                    'click',
+                    e => {
+
+                        e.stopPropagation();
+
+                        dd.classList.toggle(
+                            'open'
+                        );
+
+                        menu.classList.toggle(
+                            'show'
+                        );
+
+                    }
+                );
+
+
+                document.addEventListener(
+                    'click',
+                    () => {
+
+                        dd.classList.remove(
+                            'open'
+                        );
+
+                        menu.classList.remove(
+                            'show'
+                        );
+
+                    }
+                );
+
+            }
+
+            else {
+
+                container.innerHTML = `
+
+                    <a
+                        href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}"
+                        class="login-nav-btn"
+                    >
+
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 28 28"
+                        >
+
+                            <path
+                                d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z"
+                                stroke="white"
+                                stroke-width="2"
+                            />
+
+                            <path
+                                d="M4.5 9L14 15.5L23.5 9"
+                                stroke="white"
+                                stroke-width="2"
+                            />
+
+                        </svg>
+
+                        Login
+
+                    </a>
+
+                `;
+
+            }
+
+        }
+
+
+        // ---------- LOGOUT ----------
+
+        window.logout = function() {
+
+            localStorage.removeItem(
+                'discordUser'
+            );
+
+            window.location.href =
+                window.location.pathname;
+
+        };
+
+
+        // ---------- DISCORD REDIRECT ----------
+
+        (function handleRedirect() {
+
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+
+            const username =
+                params.get('username');
+
+            const id =
+                params.get('id');
+
+            const avatar =
+                params.get('avatar');
+
+
+            if (username && id) {
+
+                localStorage.setItem(
+                    'discordUser',
+                    JSON.stringify({
+                        username,
+                        id,
+                        avatar
+                    })
+                );
+
+
+                window.history.replaceState(
+                    {},
+                    document.title,
+                    window.location.pathname +
+                    window.location.hash
+                );
+
+            }
+
         })();
-    </script>
+
+
+        render();
+
+    })();
+
+</script>
+```
+
 </body>
+
 </html>
