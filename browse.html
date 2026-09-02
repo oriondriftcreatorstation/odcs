@@ -80,13 +80,12 @@
             window.location.replace(cleanUrl);
         }
 
-        // ---------- CONFIG ----------
-        const API_KEY = 'AIzaSyAuAd5udJQXQ19kwm7lLHgTFST2xiHh8NQ';
-        const CACHE_KEY = 'orion_drive_asset_cache_v5';
+        // ---------- CACHE CONFIG ----------
+        const CACHE_KEY = 'orion_drive_asset_cache_v6';
         const CACHE_TTL = 3600000; // 1 hour
 
         // ---------- DELETE OLD CACHE KEYS ----------
-        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4'].forEach(key => {
+        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5'].forEach(key => {
             if (localStorage.getItem(key)) {
                 console.log(`🗑️ Removing old cache: ${key}`);
                 localStorage.removeItem(key);
@@ -105,9 +104,6 @@
             if (['glb','gltf','obj','stl','fbx'].includes(ext) || mime.includes('model') || mime === 'application/octet-stream') return 'model';
             return 'other';
         };
-
-        // ---------- Build media URL using API key (for audio & downloads only) ----------
-        const getMediaUrl = (id) => `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`;
 
         // ---------- BACKEND API CALL ----------
         async function fetchAssetsFromBackend() {
@@ -164,22 +160,10 @@
         overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-        // ---------- DOWNLOAD ----------
-        async function downloadFile(url, filename) {
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const blob = await res.blob();
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-            } catch (e) {
-                alert('Download failed: ' + e.message);
-            }
+        // ---------- DOWNLOAD (use direct navigation, not fetch) ----------
+        function downloadFile(url, filename) {
+            // Open the URL in a new tab – Google Drive will start the download
+            window.open(url, '_blank');
         }
 
         // ---------- CORE LOAD FUNCTION ----------
@@ -250,10 +234,10 @@
                         mimeType: mime,
                         size: f.size ? parseInt(f.size) : null,
                         displayUrl: displayUrl,
-                        // For audio: use alt=media with API key (ORB-safe)
-                        previewUrl: (type === 'sound') ? getMediaUrl(f.id) : null,
-                        // For downloads: use alt=media with API key (ORB-safe)
-                        downloadUrl: getMediaUrl(f.id)
+                        // For audio: use the public webContentLink (audio element works cross-origin)
+                        previewUrl: (type === 'sound') ? publicLink : null,
+                        // For downloads: use the public webContentLink (opens in new tab)
+                        downloadUrl: publicLink
                     };
                 });
 
@@ -341,8 +325,11 @@
                 btn.addEventListener('click', e => {
                     e.stopPropagation();
                     const url = btn.dataset.url, name = btn.dataset.name;
-                    if (url && url !== '#') downloadFile(url, name);
-                    else alert('Download link not available.');
+                    if (url && url !== '#') {
+                        downloadFile(url, name);
+                    } else {
+                        alert('Download link not available.');
+                    }
                 });
             });
             grid.querySelectorAll('.asset-preview-btn').forEach(btn => {
@@ -386,7 +373,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 localStorage.removeItem(CACHE_KEY);
-                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4'].forEach(key => localStorage.removeItem(key));
+                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5'].forEach(key => localStorage.removeItem(key));
                 alert('Cache cleared! Refreshing...');
                 location.reload();
             }
