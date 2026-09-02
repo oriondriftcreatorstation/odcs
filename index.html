@@ -4,62 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orion Drift Creator Station</title>
-
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/ODCS.png" />
     <link rel="apple-touch-icon" href="assets/ODCS.png" />
-
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-    <!-- Custom Cursor -->
     <div class="cursor-ring" id="cursorRing"></div>
 
-    <!-- Background -->
     <div class="background">
         <div class="glow glow-one"></div>
         <div class="glow glow-two"></div>
         <div class="grid"></div>
     </div>
 
-    <!-- Floating Pill Navbar -->
     <header class="navbar">
         <div class="pill">
-            <!-- Profile / Login replaces the logo -->
             <div id="navbarProfile"></div>
-
             <nav>
                 <a href="index.html" class="active">Home</a>
                 <a href="browse.html">Browse</a>
-                <a href="sounds.html">Sounds</a>
-                <a href="images.html">Images</a>
-                <a href="models.html">Models</a>
                 <a href="upload.html">Contact</a>
                 <a href="about.html">About</a>
             </nav>
         </div>
     </header>
 
-    <!-- Hero -->
     <main class="hero">
         <div class="hero-content">
-            <div class="eyebrow">
-                <span></span>
-                ORION DRIFT CREATOR STATION
-            </div>
-
-            <h1>
-                Everything you need as an
-                <span>Orion Drift Creator</span>
-            </h1>
-
-            <p>
-                Sounds, images, models, and so much more.
-                <br />
-                For Orion Drift Creators, by Orion Drift Creators.
-            </p>
-
+            <div class="eyebrow">ORION DRIFT CREATOR STATION</div>
+            <h1>Everything you need as an <span>Orion Drift Creator</span></h1>
+            <p>Sounds, images, models, and so much more.<br/> For Orion Drift Creators, by Orion Drift Creators.</p>
             <div class="actions">
                 <a href="browse.html" class="primary-button">
                     Browse Assets
@@ -67,147 +41,131 @@
                 </a>
             </div>
         </div>
-
         <div class="scroll-indicator">
             <span></span>
             SCROLL TO EXPLORE
         </div>
     </main>
 
-    <!-- Placeholder Sections -->
-    <section id="assets" class="placeholder-section">
-        <h2>Featured Assets</h2>
-    </section>
-
-    <section id="tools" class="placeholder-section">
-        <h2>Featured Tools</h2>
-    </section>
-
-    <section id="guides" class="placeholder-section">
-        <h2>Featured Guides</h2>
-    </section>
+    <section id="assets" class="placeholder-section"><h2>Featured Assets</h2> <p>WIP</p></section>
+    <section id="tools" class="placeholder-section"><h2>Featured Tools</h2><p>WIP</p></section>
+    <section id="guides" class="placeholder-section"><h2>Featured Guides</h2><p>WIP</p></section>
 
     <script>
-        // ── Custom cursor with inversion effect ──
-        const cursorRing = document.getElementById('cursorRing');
-        let mouseX = 0,
-            mouseY = 0;
-        let ringX = 0,
-            ringY = 0;
-        let isHoveringInteractive = false;
+        (function initCursor() {
+            const ring = document.getElementById('cursorRing');
+            let mx = 0, my = 0;
+            let rx = 0, ry = 0;
+            let hover = false;
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+            document.addEventListener('mousemove', e => {
+                mx = e.clientX;
+                my = e.clientY;
+                const target = e.target;
+                hover = !!target.closest('a, button, .pill, .primary-button, .login-nav-btn, .profile-container, .filter-pill, .asset-download-btn, .asset-preview-btn, .asset-enlarge-btn, .asset-card');
+                if (hover) {
+                    ring.style.width = '40px';
+                    ring.style.height = '40px';
+                    ring.style.border = '2px solid rgba(255,255,255,0.4)';
+                    ring.style.background = 'rgba(255,255,255,0.08)';
+                    ring.style.backdropFilter = 'blur(2px)';
+                    ring.style.mixBlendMode = 'normal';
+                } else {
+                    ring.style.width = '24px';
+                    ring.style.height = '24px';
+                    ring.style.border = 'none';
+                    ring.style.background = 'white';
+                    ring.style.backdropFilter = 'none';
+                    ring.style.mixBlendMode = 'difference';
+                }
+                document.body.style.cursor = 'none';
+            });
 
-            const target = e.target;
-            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button') || target.closest('.login-nav-btn') || target.closest('.profile-container');
-            isHoveringInteractive = !!isInteractive;
-
-            if (isHoveringInteractive) {
-                cursorRing.style.width = '48px';
-                cursorRing.style.height = '48px';
-                cursorRing.style.border = '2px solid rgba(255,255,255,0.4)';
-                cursorRing.style.background = 'rgba(255,255,255,0.08)';
-                cursorRing.style.backdropFilter = 'blur(2px)';
-                cursorRing.style.mixBlendMode = 'normal';
-            } else {
-                cursorRing.style.width = '32px';
-                cursorRing.style.height = '32px';
-                cursorRing.style.border = 'none';
-                cursorRing.style.background = 'white';
-                cursorRing.style.backdropFilter = 'none';
-                cursorRing.style.mixBlendMode = 'difference';
+            function anim() {
+                rx += (mx - rx) * 0.18;
+                ry += (my - ry) * 0.18;
+                ring.style.left = (rx - ring.offsetWidth / 2) + 'px';
+                ring.style.top = (ry - ring.offsetHeight / 2) + 'px';
+                requestAnimationFrame(anim);
             }
-        });
 
-        function animateCursor() {
-            ringX += (mouseX - ringX) * 0.15;
-            ringY += (mouseY - ringY) * 0.15;
-            cursorRing.style.left = (ringX - cursorRing.offsetWidth / 2) + 'px';
-            cursorRing.style.top = (ringY - cursorRing.offsetHeight / 2) + 'px';
-            requestAnimationFrame(animateCursor);
-        }
+            document.documentElement.style.cursor = 'none';
+            document.body.style.cursor = 'none';
+            const style = document.createElement('style');
+            style.textContent = `
+                *,
+                *::before,
+                *::after {
+                    cursor: none !important;
+                }
+            `;
+            document.head.appendChild(style);
 
-        document.body.style.cursor = 'none';
+            document.addEventListener('mouseleave', () => { ring.style.opacity = '0'; });
+            document.addEventListener('mouseenter', () => { ring.style.opacity = '1'; });
 
-        document.addEventListener('mouseleave', () => { cursorRing.style.opacity = '0'; });
-        document.addEventListener('mouseenter', () => { cursorRing.style.opacity = '1'; });
-
-        animateCursor();
-
-        // ─────────────────────────────────────────────
-        // ── NAVBAR PROFILE LOGIC ──
-        // ─────────────────────────────────────────────
-
-        const AUTH_BACKEND_URL = window.location.origin;
-        const navbarProfile = document.getElementById('navbarProfile');
-
-        function renderNavbarProfile() {
-            const user = JSON.parse(localStorage.getItem('discordUser'));
-
-            if (user) {
-                const avatarUrl = user.avatar ?
-                    `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64` :
-                    `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
-
-                navbarProfile.innerHTML = `
-                    <div class="profile-container" id="profileDropdown">
-                        <img src="${avatarUrl}" alt="Avatar" />
-                        <span class="username">${user.username}</span>
-                        <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M6 8L1 3L11 3L6 8Z" fill="white"/>
-                        </svg>
-                        <div class="dropdown-menu" id="dropdownMenu">
-                            <a href="#" class="logout-item" onclick="logout()">Logout</a>
-                        </div>
-                    </div>
-                `;
-
-                const container = document.getElementById('profileDropdown');
-                const menu = document.getElementById('dropdownMenu');
-                container.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    container.classList.toggle('open');
-                    menu.classList.toggle('show');
-                });
-                document.addEventListener('click', () => {
-                    container.classList.remove('open');
-                    menu.classList.remove('show');
-                });
-            } else {
-                navbarProfile.innerHTML = `
-                    <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
-                        <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/>
-                            <path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/>
-                        </svg>
-                        Login
-                    </a>
-                `;
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('discordUser');
-            window.location.href = window.location.pathname;
-        }
-
-        // ── Handle OAuth redirect ──
-        (function handleRedirect() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const username = urlParams.get('username');
-            const id = urlParams.get('id');
-            const avatar = urlParams.get('avatar');
-
-            if (username && id) {
-                localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
-                const newUrl = window.location.pathname + window.location.hash;
-                window.history.replaceState({}, document.title, newUrl);
-            }
+            anim();
         })();
 
-        renderNavbarProfile();
+        (function initProfile() {
+            const AUTH_BACKEND_URL = window.location.origin;
+            const container = document.getElementById('navbarProfile');
+
+            function render() {
+                const user = JSON.parse(localStorage.getItem('discordUser'));
+                if (user) {
+                    const avatar = user.avatar
+                        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
+                        : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
+                    container.innerHTML = `
+                        <div class="profile-container" id="profileDropdown">
+                            <img src="${avatar}" alt="Avatar" />
+                            <span class="username">${user.username}</span>
+                            <svg class="chevron" width="12" height="12" viewBox="0 0 12 12"><path d="M6 8L1 3L11 3L6 8Z" fill="white"/></svg>
+                            <div class="dropdown-menu" id="dropdownMenu">
+                                <a href="#" class="logout-item" onclick="logout()">Logout</a>
+                            </div>
+                        </div>
+                    `;
+                    const dd = document.getElementById('profileDropdown');
+                    const menu = document.getElementById('dropdownMenu');
+                    dd.addEventListener('click', e => {
+                        e.stopPropagation();
+                        dd.classList.toggle('open');
+                        menu.classList.toggle('show');
+                    });
+                    document.addEventListener('click', () => {
+                        dd.classList.remove('open');
+                        menu.classList.remove('show');
+                    });
+                } else {
+                    container.innerHTML = `
+                        <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
+                            <svg width="16" height="16" viewBox="0 0 28 28"><path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/><path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/></svg>
+                            Login
+                        </a>
+                    `;
+                }
+            }
+
+            window.logout = function() {
+                localStorage.removeItem('discordUser');
+                window.location.href = window.location.pathname;
+            };
+
+            (function handleRedirect() {
+                const params = new URLSearchParams(window.location.search);
+                const username = params.get('username');
+                const id = params.get('id');
+                const avatar = params.get('avatar');
+                if (username && id) {
+                    localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
+                    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+                }
+            })();
+
+            render();
+        })();
     </script>
 </body>
 </html>
