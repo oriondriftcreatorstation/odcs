@@ -3,176 +3,422 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Browse - Orion Drift Creator Station</title>
-
-    <!-- Favicon -->
+    <title>Browse – Orion Drift Creator Station</title>
     <link rel="icon" type="image/png" href="assets/ODCS.png" />
     <link rel="apple-touch-icon" href="assets/ODCS.png" />
-
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-    <!-- Custom Cursor -->
     <div class="cursor-ring" id="cursorRing"></div>
-
-    <!-- Background -->
     <div class="background">
         <div class="glow glow-one"></div>
         <div class="glow glow-two"></div>
         <div class="grid"></div>
     </div>
 
-    <!-- Floating Pill Navbar -->
     <header class="navbar">
         <div class="pill">
             <div id="navbarProfile"></div>
-
             <nav>
                 <a href="index.html">Home</a>
                 <a href="browse.html" class="active">Browse</a>
-                <a href="sounds.html">Sounds</a>
-                <a href="images.html">Images</a>
-                <a href="models.html">Models</a>
                 <a href="upload.html">Contact</a>
                 <a href="about.html">About</a>
             </nav>
         </div>
     </header>
 
-    <!-- Hero -->
-    <main class="hero">
+    <section class="hero hero-browse">
         <div class="hero-content">
-            <div class="eyebrow">
-                <span></span>
-                Orion Drift Creator Station
-            </div>
-
+            <div class="eyebrow"><span></span>Orion Drift Creator Station</div>
             <h1>Browse all assets</h1>
-
-            <p>From sound effects to models, we have them all here.</p>
+            <p>From sound effects to models, find what you need.</p>
         </div>
-        <div class="scroll-indicator">
-            <span></span>
-            SCROLL TO EXPLORE
+        <div class="scroll-indicator"><span></span>SCROLL TO EXPLORE</div>
+    </section>
+
+    <section class="browse-section" id="browseSection">
+        <div class="filter-bar" id="filterBar">
+            <div class="filter-pills" id="filterPills">
+                <button class="filter-pill active" data-filter="all">All <span class="count"></span></button>
+                <button class="filter-pill" data-filter="image">Images <span class="count"></span></button>
+                <button class="filter-pill" data-filter="sound">Sounds <span class="count"></span></button>
+                <button class="filter-pill" data-filter="model">Models <span class="count"></span></button>
+            </div>
+            <div class="search-wrapper">
+                <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11L14.5 14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <input class="search-input" id="searchInput" type="text" placeholder="Search assets…" />
+            </div>
         </div>
-    </main>
 
-    <script>
-        // ── Custom cursor with inversion effect ──
-        const cursorRing = document.getElementById('cursorRing');
-        let mouseX = 0, mouseY = 0;
-        let ringX = 0, ringY = 0;
-        let isHoveringInteractive = false;
+        <div class="asset-grid" id="assetGrid">
+            <div class="loading-grid">
+                <div class="spinner"></div>
+                <span style="color:var(--muted);font-size:14px;">Loading assets...</span>
+            </div>
+        </div>
+    </section>
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+    <div class="lightbox-overlay" id="lightboxOverlay">
+        <button class="lightbox-close" id="lightboxClose">✕</button>
+        <img id="lightboxImage" src="" alt="Enlarged view" />
+    </div>
 
-            const target = e.target;
-            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button') || target.closest('.login-nav-btn') || target.closest('.profile-container');
-            isHoveringInteractive = !!isInteractive;
+    <script type="module">
+        const CONFIG = {
+            apiKey: 'AIzaSyAuAd5udJQXQ19kwm7lLHgTFST2xiHh8NQ',
+            folderIds: {
+                images: '1YPHgDXLYrEz1-o52EQFKVBp5yHikOOca',
+                sounds: '1LWXuSRzD0ZqNRIrFRYDASbjOIqYm9kqo',
+                models: '1rMFkHSOaXA-uJwfBOqb9HUbiC4Z3ierq'
+            },
+            modelPreviewFolderId: '1p0Y83tqPEDloPIFndVJo2g3Kc_OOwQkg'
+        };
 
-            if (isHoveringInteractive) {
-                cursorRing.style.width = '48px';
-                cursorRing.style.height = '48px';
-                cursorRing.style.border = '2px solid rgba(255,255,255,0.4)';
-                cursorRing.style.background = 'rgba(255,255,255,0.08)';
-                cursorRing.style.backdropFilter = 'blur(2px)';
-                cursorRing.style.mixBlendMode = 'normal';
-            } else {
-                cursorRing.style.width = '32px';
-                cursorRing.style.height = '32px';
-                cursorRing.style.border = 'none';
-                cursorRing.style.background = 'white';
-                cursorRing.style.backdropFilter = 'none';
-                cursorRing.style.mixBlendMode = 'difference';
-            }
-        });
+        const getMediaUrl = (id, key) => `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${key}`;
+        const formatSize = bytes => bytes ? (bytes < 1048576 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1048576).toFixed(1)+' MB') : '—';
+        const getExt = name => name.split('.').pop().toLowerCase();
+        const getBase = name => name.replace(/\.[^.]+$/, '');
+        const isFolder = f => f.mimeType === 'application/vnd.google-apps.folder';
+        const isSupported = f => !isFolder(f) && (f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('audio/') || ['glb','gltf','obj','stl','fbx'].includes(getExt(f.name)) || f.mimeType?.includes('model') || f.mimeType === 'application/octet-stream');
+        const getType = (mime, name) => mime.startsWith('image/') ? 'image' : mime.startsWith('audio/') ? 'sound' : (['glb','gltf','obj','stl','fbx'].includes(getExt(name)) || mime.includes('model') || mime === 'application/octet-stream') ? 'model' : 'other';
 
-        function animateCursor() {
-            ringX += (mouseX - ringX) * 0.15;
-            ringY += (mouseY - ringY) * 0.15;
-            cursorRing.style.left = (ringX - cursorRing.offsetWidth / 2) + 'px';
-            cursorRing.style.top = (ringY - cursorRing.offsetHeight / 2) + 'px';
-            requestAnimationFrame(animateCursor);
+        async function fetchFolder(folderId, apiKey) {
+            if (!folderId) return [];
+            const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&key=${apiKey}&fields=files(id,name,mimeType,size,webContentLink,thumbnailLink)`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
+            const data = await res.json();
+            return (data.files || []).filter(isSupported);
         }
 
-        document.body.style.cursor = 'none';
+        async function fetchPreviews(folderId, apiKey) {
+            if (!folderId) return [];
+            const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&key=${apiKey}&fields=files(id,name,mimeType,thumbnailLink,webContentLink)`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
+            const data = await res.json();
+            return (data.files || []).filter(f => f.mimeType?.startsWith('image/'));
+        }
 
-        document.addEventListener('mouseleave', () => { cursorRing.style.opacity = '0'; });
-        document.addEventListener('mouseenter', () => { cursorRing.style.opacity = '1'; });
+        let allAssets = [];
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let modelPreviewMap = new Map();
+        let currentAudio = null, currentPlayingBtn = null;
 
-        animateCursor();
+        const grid = document.getElementById('assetGrid');
+        const filterPills = document.querySelectorAll('.filter-pill');
+        const searchInput = document.getElementById('searchInput');
+        const overlay = document.getElementById('lightboxOverlay');
+        const lightboxImg = document.getElementById('lightboxImage');
+        const closeBtn = document.getElementById('lightboxClose');
 
-        // ── NAVBAR PROFILE LOGIC ──
-        const AUTH_BACKEND_URL = window.location.origin;
-        const navbarProfile = document.getElementById('navbarProfile');
+        function stopAudio() {
+            if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+            if (currentPlayingBtn) { currentPlayingBtn.textContent = '▶ Preview'; currentPlayingBtn.classList.remove('playing'); currentPlayingBtn = null; }
+        }
 
-        function renderNavbarProfile() {
-            const user = JSON.parse(localStorage.getItem('discordUser'));
+        function toggleAudio(url, btn) {
+            if (currentPlayingBtn === btn) { stopAudio(); return; }
+            stopAudio();
+            currentAudio = new Audio(url);
+            currentAudio.addEventListener('ended', () => { stopAudio(); });
+            currentAudio.play().catch(() => { stopAudio(); });
+            btn.textContent = '⏹ Stop';
+            btn.classList.add('playing');
+            currentPlayingBtn = btn;
+        }
 
-            if (user) {
-                const avatarUrl = user.avatar ?
-                    `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64` :
-                    `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
+        function openLightbox(src) {
+            if (!src) return;
+            lightboxImg.src = src;
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeLightbox() {
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+            lightboxImg.src = '';
+        }
+        closeBtn.addEventListener('click', closeLightbox);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-                navbarProfile.innerHTML = `
-                    <div class="profile-container" id="profileDropdown">
-                        <img src="${avatarUrl}" alt="Avatar" />
-                        <span class="username">${user.username}</span>
-                        <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M6 8L1 3L11 3L6 8Z" fill="white"/>
-                        </svg>
-                        <div class="dropdown-menu" id="dropdownMenu">
-                            <a href="#" class="logout-item" onclick="logout()">Logout</a>
+        async function downloadFile(url, filename) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const blob = await res.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            } catch (e) {
+                alert('Download failed: ' + e.message);
+            }
+        }
+
+        async function loadAssets() {
+            const { apiKey, folderIds, modelPreviewFolderId } = CONFIG;
+            if (apiKey === 'YOUR_API_KEY' || !folderIds.images || !folderIds.sounds || !folderIds.models) {
+                grid.innerHTML = `<div class="no-results"><div class="big-icon">⚙️</div><h3>Configuration missing</h3><p>Error - No Results</p></div>`;
+                return;
+            }
+            try {
+                const [images, sounds, models] = await Promise.all([
+                    fetchFolder(folderIds.images, apiKey),
+                    fetchFolder(folderIds.sounds, apiKey),
+                    fetchFolder(folderIds.models, apiKey)
+                ]);
+
+                modelPreviewMap.clear();
+                if (modelPreviewFolderId) {
+                    const previews = await fetchPreviews(modelPreviewFolderId, apiKey);
+                    previews.forEach(f => {
+                        const base = getBase(f.name);
+                        modelPreviewMap.set(base, getMediaUrl(f.id, apiKey));
+                    });
+                }
+
+                allAssets = [
+                    ...images.map(f => ({ id: f.id, title: f.name, type: 'image', mimeType: f.mimeType, size: f.size ? parseInt(f.size) : null, displayUrl: getMediaUrl(f.id, apiKey), downloadUrl: getMediaUrl(f.id, apiKey) })),
+                    ...sounds.map(f => ({ id: f.id, title: f.name, type: 'sound', mimeType: f.mimeType, size: f.size ? parseInt(f.size) : null, previewUrl: getMediaUrl(f.id, apiKey), downloadUrl: getMediaUrl(f.id, apiKey) })),
+                    ...models.map(f => {
+                        const base = getBase(f.name);
+                        const preview = modelPreviewMap.get(base) || null;
+                        return { id: f.id, title: f.name, type: 'model', mimeType: f.mimeType, size: f.size ? parseInt(f.size) : null, displayUrl: preview, downloadUrl: getMediaUrl(f.id, apiKey), previewUrl: preview };
+                    })
+                ];
+                renderAssets();
+            } catch (error) {
+                console.error(error);
+                grid.innerHTML = `<div class="no-results"><div class="big-icon"></div><h3>Could not load assets</h3><p>${error.message}</p></div>`;
+            }
+        }
+
+        function renderAssets() {
+            const filtered = allAssets.filter(a => {
+                const matchType = currentFilter === 'all' || a.type === currentFilter;
+                const matchSearch = a.title.toLowerCase().includes(currentSearch.toLowerCase());
+                return matchType && matchSearch;
+            });
+
+            document.querySelectorAll('.filter-pill').forEach(pill => {
+                const type = pill.dataset.filter;
+                const count = type === 'all' ? allAssets.length : allAssets.filter(a => a.type === type).length;
+                pill.querySelector('.count').textContent = count;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="no-results"><div class="big-icon">🔍</div><h3>No assets found</h3><p>${allAssets.length === 0 ? 'No files in selected folders.' : 'Try adjusting filters or search.'}</p></div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(asset => {
+                const isImage = asset.type === 'image';
+                const isSound = asset.type === 'sound';
+                const isModel = asset.type === 'model';
+                let thumb = '';
+                if (isImage) {
+                    const src = asset.displayUrl || asset.thumbnailLink || '';
+                    thumb = src ? `<img src="${src}" alt="${asset.title}" loading="lazy" onerror="this.classList.add('error'); this.nextElementSibling.style.display='flex';" /><div class="asset-icon-fallback">🖼️</div>` : `<span class="asset-icon">🖼️</span>`;
+                } else if (isSound) thumb = `<span class="asset-icon">🎵</span>`;
+                else if (isModel) {
+                    const src = asset.displayUrl || asset.thumbnailLink || '';
+                    thumb = src ? `<img src="${src}" alt="${asset.title}" loading="lazy" onerror="this.classList.add('error'); this.nextElementSibling.style.display='flex';" /><div class="asset-icon-fallback">🧊</div>` : `<span class="asset-icon">🧊</span>`;
+                } else thumb = `<span class="asset-icon">📄</span>`;
+
+                const dlUrl = asset.downloadUrl || '#';
+                let actions = `
+                    <button class="asset-download-btn" data-url="${dlUrl}" data-name="${asset.title}">
+                        <svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.5"><path d="M8 1v10M4 7l4 4 4-4"/><path d="M1 13h14"/></svg>
+                        Download
+                    </button>
+                `;
+                if (isSound && asset.previewUrl) {
+                    actions += `<button class="asset-preview-btn" data-url="${asset.previewUrl}">▶ Preview</button>`;
+                }
+                if (isImage && asset.displayUrl) {
+                    actions += `<button class="asset-enlarge-btn" data-url="${asset.displayUrl}">Enlarge</button>`;
+                }
+
+                return `
+                    <div class="asset-card" data-id="${asset.id}">
+                        <div class="asset-thumb">
+                            ${thumb}
+                            <span class="asset-badge ${asset.type}">${asset.type.charAt(0).toUpperCase()+asset.type.slice(1)}</span>
+                        </div>
+                        <div class="asset-info">
+                            <div class="asset-title">${asset.title}</div>
+                            <div class="asset-meta"><span>${formatSize(asset.size)}</span></div>
+                            <div class="asset-actions">${actions}</div>
                         </div>
                     </div>
                 `;
+            }).join('');
 
-                const container = document.getElementById('profileDropdown');
-                const menu = document.getElementById('dropdownMenu');
-                container.addEventListener('click', (e) => {
+            grid.querySelectorAll('.asset-download-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
                     e.stopPropagation();
-                    container.classList.toggle('open');
-                    menu.classList.toggle('show');
+                    const url = btn.dataset.url, name = btn.dataset.name;
+                    if (url && url !== '#') downloadFile(url, name);
+                    else alert('Download link not available.');
                 });
-                document.addEventListener('click', () => {
-                    container.classList.remove('open');
-                    menu.classList.remove('show');
+            });
+            grid.querySelectorAll('.asset-preview-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const url = btn.dataset.url;
+                    if (url) toggleAudio(url, btn);
+                    else alert('Preview not available.');
                 });
-            } else {
-                navbarProfile.innerHTML = `
-                    <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
-                        <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/>
-                            <path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/>
-                        </svg>
-                        Login
-                    </a>
-                `;
-            }
+            });
+            grid.querySelectorAll('.asset-enlarge-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const url = btn.dataset.url;
+                    if (url) openLightbox(url);
+                    else alert('No image to enlarge.');
+                });
+            });
         }
 
-        function logout() {
-            localStorage.removeItem('discordUser');
-            window.location.href = window.location.pathname;
-        }
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                stopAudio();
+                filterPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                currentFilter = pill.dataset.filter;
+                renderAssets();
+            });
+        });
+        searchInput.addEventListener('input', e => {
+            stopAudio();
+            currentSearch = e.target.value;
+            renderAssets();
+        });
 
-        (function handleRedirect() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const username = urlParams.get('username');
-            const id = urlParams.get('id');
-            const avatar = urlParams.get('avatar');
+        loadAssets();
+    </script>
 
-            if (username && id) {
-                localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
-                const newUrl = window.location.pathname + window.location.hash;
-                window.history.replaceState({}, document.title, newUrl);
+    <script>
+        (function initCursor() {
+            const ring = document.getElementById('cursorRing');
+            let mx = 0, my = 0;
+            let rx = 0, ry = 0;
+            let hover = false;
+
+            document.addEventListener('mousemove', e => {
+                mx = e.clientX;
+                my = e.clientY;
+                const target = e.target;
+                hover = !!target.closest('a, button, .pill, .primary-button, .login-nav-btn, .profile-container, .filter-pill, .asset-download-btn, .asset-preview-btn, .asset-enlarge-btn, .asset-card');
+                if (hover) {
+                    ring.style.width = '40px';
+                    ring.style.height = '40px';
+                    ring.style.border = '2px solid rgba(255,255,255,0.4)';
+                    ring.style.background = 'rgba(255,255,255,0.08)';
+                    ring.style.backdropFilter = 'blur(2px)';
+                    ring.style.mixBlendMode = 'normal';
+                } else {
+                    ring.style.width = '24px';
+                    ring.style.height = '24px';
+                    ring.style.border = 'none';
+                    ring.style.background = 'white';
+                    ring.style.backdropFilter = 'none';
+                    ring.style.mixBlendMode = 'difference';
+                }
+                document.body.style.cursor = 'none';
+            });
+
+            function anim() {
+                rx += (mx - rx) * 0.18;
+                ry += (my - ry) * 0.18;
+                ring.style.left = (rx - ring.offsetWidth / 2) + 'px';
+                ring.style.top = (ry - ring.offsetHeight / 2) + 'px';
+                requestAnimationFrame(anim);
             }
+
+            document.documentElement.style.cursor = 'none';
+            document.body.style.cursor = 'none';
+            const style = document.createElement('style');
+            style.textContent = `
+                *,
+                *::before,
+                *::after {
+                    cursor: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.addEventListener('mouseleave', () => { ring.style.opacity = '0'; });
+            document.addEventListener('mouseenter', () => { ring.style.opacity = '1'; });
+
+            anim();
         })();
 
-        renderNavbarProfile();
+
+        (function initProfile() {
+            const AUTH_BACKEND_URL = window.location.origin;
+            const container = document.getElementById('navbarProfile');
+
+            function render() {
+                const user = JSON.parse(localStorage.getItem('discordUser'));
+                if (user) {
+                    const avatar = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
+                    container.innerHTML = `
+                        <div class="profile-container" id="profileDropdown">
+                            <img src="${avatar}" alt="Avatar" />
+                            <span class="username">${user.username}</span>
+                            <svg class="chevron" width="12" height="12" viewBox="0 0 12 12"><path d="M6 8L1 3L11 3L6 8Z" fill="white"/></svg>
+                            <div class="dropdown-menu" id="dropdownMenu">
+                                <a href="#" class="logout-item" onclick="logout()">Logout</a>
+                            </div>
+                        </div>
+                    `;
+                    const dd = document.getElementById('profileDropdown');
+                    const menu = document.getElementById('dropdownMenu');
+                    dd.addEventListener('click', e => {
+                        e.stopPropagation();
+                        dd.classList.toggle('open');
+                        menu.classList.toggle('show');
+                    });
+                    document.addEventListener('click', () => {
+                        dd.classList.remove('open');
+                        menu.classList.remove('show');
+                    });
+                } else {
+                    container.innerHTML = `
+                        <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
+                            <svg width="16" height="16" viewBox="0 0 28 28"><path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/><path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/></svg>
+                            Login
+                        </a>
+                    `;
+                }
+            }
+
+            window.logout = function() {
+                localStorage.removeItem('discordUser');
+                window.location.href = window.location.pathname;
+            };
+
+            (function handleRedirect() {
+                const params = new URLSearchParams(window.location.search);
+                const username = params.get('username');
+                const id = params.get('id');
+                const avatar = params.get('avatar');
+                if (username && id) {
+                    localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
+                    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+                }
+            })();
+
+            render();
+        })();
     </script>
 </body>
 </html>
