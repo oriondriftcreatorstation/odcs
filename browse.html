@@ -7,6 +7,10 @@
     <link rel="icon" type="image/png" href="assets/ODCS.png" />
     <link rel="apple-touch-icon" href="assets/ODCS.png" />
     <link rel="stylesheet" href="style.css" />
+    <!-- Force browsers to always fetch fresh HTML -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 </head>
 <body>
     <div class="cursor-ring" id="cursorRing"></div>
@@ -65,9 +69,16 @@
     </div>
 
     <script type="module">
-        // ---------- CACHE CONFIG ----------
-        const CACHE_KEY = 'orion_drive_asset_cache';
+        // ---------- NEW CACHE KEY – forces fresh cache ----------
+        const CACHE_KEY = 'orion_drive_asset_cache_v2';  // <-- CHANGED!
         const CACHE_TTL = 3600000; // 1 hour
+
+        // ---------- DELETE OLD CACHE IF EXISTS ----------
+        const oldKey = 'orion_drive_asset_cache';
+        if (localStorage.getItem(oldKey)) {
+            console.log('🗑️ Removing old cache (version 1)');
+            localStorage.removeItem(oldKey);
+        }
 
         // ---------- UTILITY FUNCTIONS ----------
         const formatSize = bytes => bytes ? (bytes < 1048576 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1048576).toFixed(1)+' MB') : '—';
@@ -157,14 +168,13 @@
 
         // ---------- CORE LOAD FUNCTION ----------
         async function loadAssets() {
-            // 1. TRY READING FROM CACHE
+            // 1. TRY READING FROM NEW CACHE
             const cachedData = localStorage.getItem(CACHE_KEY);
             if (cachedData) {
                 try {
                     const parsed = JSON.parse(cachedData);
                     const now = Date.now();
                     
-                    // If timestamp is in the future, delete it
                     if (parsed.timestamp > now) {
                         console.warn('⚠️ Cache timestamp is in the future. Ignoring cache.');
                         localStorage.removeItem(CACHE_KEY);
@@ -353,14 +363,18 @@
         // ---------- START ----------
         loadAssets();
 
-        // ---------- Clear Cache Button (hidden by default, press Ctrl+Shift+C to show) ----------
+        // ---------- Clear Cache: Press Ctrl+Shift+C ----------
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 localStorage.removeItem(CACHE_KEY);
+                localStorage.removeItem('orion_drive_asset_cache');
                 alert('Cache cleared! Refreshing...');
                 location.reload();
             }
         });
+
+        console.log('📦 Cache key:', CACHE_KEY);
+        console.log('💡 Press Ctrl+Shift+C to clear cache and reload');
     </script>
 
     <!-- ==================== CURSOR & PROFILE ==================== -->
