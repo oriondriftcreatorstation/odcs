@@ -7,6 +7,7 @@ module.exports = async (req, res) => {
     try {
         const credentials = process.env.GOOGLE_SERVICE_ACCOUNT;
         if (!credentials) {
+            console.error('❌ GOOGLE_SERVICE_ACCOUNT environment variable not set');
             return res.status(500).json({ error: 'Service account credentials missing.' });
         }
 
@@ -14,9 +15,11 @@ module.exports = async (req, res) => {
         try {
             creds = JSON.parse(credentials);
         } catch (e) {
+            console.error('❌ Failed to parse credentials:', e.message);
             return res.status(500).json({ error: 'Invalid service account JSON.' });
         }
 
+        // Auth using service account
         const auth = new google.auth.GoogleAuth({
             credentials: creds,
             scopes: ['https://www.googleapis.com/auth/drive.readonly'],
@@ -24,87 +27,66 @@ module.exports = async (req, res) => {
 
         const drive = google.drive({ version: 'v3', auth });
 
-        // Individual folder IDs
-        const imageFolderId = '1YPHgDXLYrEz1-o52EQFKVBp5yHikOOca';
-        const soundFolderId = '1LWXuSRzD0ZqNRIrFRYDASbjOIqYm9kqo';
-        const modelFolderId = '1rMFkHSOaXA-uJwfBOqb9HUbiC4Z3ierq';
+        // Folder IDs
+        const folders = [
+            { id: '1YPHgDXLYrEz1-o52EQFKVBp5yHikOOca', name: 'images' },
+            { id: '1LWXuSRzD0ZqNRIrFRYDASbjOIqYm9kqo', name: 'sounds' },
+            { id: '1rMFkHSOaXA-uJwfBOqb9HUbiC4Z3ierq', name: 'models' },
+        ];
         const previewFolderId = '1p0Y83tqPEDloPIFndVJo2g3Kc_OOwQkg';
 
         async function fetchFilesFromFolder(folderId) {
-            const query = `'${folderId}'+in+parents`;
-            console.log(`📡 Fetching from folder: ${folderId}`);
-            const response = await drive.files.list({
-                q: query,
-                fields: 'files(id,name,mimeType,size,parents)',
-                pageSize: 1000,
-            });
-            return response.data.files || [];
-        }
-
-        // Test each folder individually and return detailed results
-        let results = {
-            images: { folderId: imageFolderId, success: false, count: 0, error: null },
-            sounds: { folderId: soundFolderId, success: false, count: 0, error: null },
-            models: { folderId: modelFolderId, success: false, count: 0, error: null },
-            previews: { folderId: previewFolderId, success: false, count: 0, error: null },
-        };
-
-        // Try each folder
-        for (const [key, folderId] of Object.entries({
-            images: imageFolderId,
-            sounds: soundFolderId,
-            models: modelFolderId,
-            previews: previewFolderId
-        })) {
             try {
-                const files = await fetchFilesFromFolder(folderId);
-                const filtered = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
-                results[key].success = true;
-                results[key].count = filtered.length;
-                console.log(`✅ ${key}: ${filtered.length} files`);
+                const response = await drive.files.list({
+                    q: `'${folderId}' in parents`,
+                    fields: 'files(id,name,mimeType,size,webContentLink,thumbnailLink)',
+                    pageSize: 1000,
+                });
+                return response.data.files || [];
             } catch (error) {
-                results[key].success = false;
-                results[key].error = error.message;
-                console.error(`❌ ${key}: ${error.message}`);
+                console.error(`❌ Error fetching folder ${folderId}:`, error.message);
+                // If it fails, return empty array
+                return [];
             }
         }
 
-        // Build combined assets from successful folders
-        let allAssets = [];
-        let previewFiles = [];
+        // Fetch all folders in parallel
+        console.log('🔍 Fetching assets from Drive...');
+        const [imageFiles, soundFiles, modelFiles, previewFiles] = await Promise.all([
+            fetchFilesFromFolder(folders[0].id),
+            fetchFilesFromFolder(folders[1].id),
+            fetchFilesFromFolder(folders[2].id),
+            fetchFilesFromFolder(previewFolderId),
+        ]);
 
-        // Collect assets from successful folders
-        for (const key of ['images', 'sounds', 'models']) {
-            if (results[key].success) {
-                try {
-                    const files = await fetchFilesFromFolder(results[key].folderId);
-                    const filtered = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
-                    allAssets = [...allAssets, ...filtered];
-                } catch (e) {
-                    // already logged above
-                }
-            }
-        }
+        // Filter out actual folders (just in case)
+        const images = imageFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+        const sounds = soundFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+        const models = modelFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+        const previews = previewFiles.filter(f => f.mimeType.startsWith('image/'));
 
-        // Get previews if successful
-        if (results.previews.success) {
-            try {
-                const files = await fetchFilesFromFolder(previewFolderId);
-                previewFiles = files.filter(f => f.mimeType.startsWith('image/'));
-            } catch (e) {
-                // already logged above
-            }
-        }
+        const allAssets = [...images, ...sounds, ...models];
 
+        console.log(`✅ Images: ${images.length}, Sounds: ${sounds.length}, Models: ${models.length}, Previews: ${previews.length}`);
+        console.log(`✅ Total assets: ${allAssets.length}`);
+
+        // Cache on Vercel's CDN for 5 minutes
         res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
+
         res.status(200).json({ 
-            assets: allAssets,
+            assets: allAssets, 
             previews: previewFiles,
-            testResults: results // This will tell us exactly which folders are working
+            counts: {
+                images: images.length,
+                sounds: sounds.length,
+                models: models.length,
+                previews: previewFiles.length
+            }
         });
 
     } catch (error) {
         console.error('❌ Unhandled error:', error.message);
+        console.error('Stack:', error.stack);
         res.status(500).json({ 
             error: 'Internal server error',
             message: error.message
