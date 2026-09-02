@@ -81,11 +81,11 @@
         }
 
         // ---------- CACHE CONFIG ----------
-        const CACHE_KEY = 'orion_drive_asset_cache_v6';
+        const CACHE_KEY = 'orion_drive_asset_cache_v7';
         const CACHE_TTL = 3600000; // 1 hour
 
         // ---------- DELETE OLD CACHE KEYS ----------
-        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5'].forEach(key => {
+        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6'].forEach(key => {
             if (localStorage.getItem(key)) {
                 console.log(`🗑️ Removing old cache: ${key}`);
                 localStorage.removeItem(key);
@@ -137,9 +137,20 @@
         function toggleAudio(url, btn) {
             if (currentPlayingBtn === btn) { stopAudio(); return; }
             stopAudio();
+            // Create audio element with crossOrigin attribute to help with CORS
             currentAudio = new Audio(url);
+            currentAudio.crossOrigin = 'anonymous';
             currentAudio.addEventListener('ended', () => { stopAudio(); });
-            currentAudio.play().catch(() => { stopAudio(); });
+            currentAudio.addEventListener('error', (e) => {
+                console.warn('Audio error:', e);
+                stopAudio();
+                alert('Preview failed. Try downloading the file instead.');
+            });
+            currentAudio.play().catch(err => {
+                console.warn('Play failed:', err);
+                stopAudio();
+                alert('Preview failed. Try downloading the file.');
+            });
             btn.textContent = '⏹ Stop';
             btn.classList.add('playing');
             currentPlayingBtn = btn;
@@ -160,9 +171,8 @@
         overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-        // ---------- DOWNLOAD (use direct navigation, not fetch) ----------
+        // ---------- DOWNLOAD (direct navigation) ----------
         function downloadFile(url, filename) {
-            // Open the URL in a new tab – Google Drive will start the download
             window.open(url, '_blank');
         }
 
@@ -216,7 +226,7 @@
                     const base = getBase(f.name);
                     const mime = f.mimeType || '';
                     const type = getType(mime, f.name);
-                    const publicLink = f.webContentLink || null;
+                    const publicLink = f.webContentLink || null; // export=download
                     const thumbLink = f.thumbnailLink || null;
 
                     // Display URL: use thumbnailLink for images (avoids ORB)
@@ -227,6 +237,12 @@
                         displayUrl = modelPreviewMap.get(base) || thumbLink || publicLink;
                     }
 
+                    // Audio preview: use export=media for streaming
+                    let previewUrl = null;
+                    if (type === 'sound') {
+                        previewUrl = `https://drive.google.com/uc?export=media&id=${f.id}`;
+                    }
+
                     return {
                         id: f.id,
                         title: f.name,
@@ -234,9 +250,8 @@
                         mimeType: mime,
                         size: f.size ? parseInt(f.size) : null,
                         displayUrl: displayUrl,
-                        // For audio: use the public webContentLink (audio element works cross-origin)
-                        previewUrl: (type === 'sound') ? publicLink : null,
-                        // For downloads: use the public webContentLink (opens in new tab)
+                        previewUrl: previewUrl,
+                        // Download uses export=download (already in publicLink)
                         downloadUrl: publicLink
                     };
                 });
@@ -373,7 +388,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 localStorage.removeItem(CACHE_KEY);
-                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5'].forEach(key => localStorage.removeItem(key));
+                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6'].forEach(key => localStorage.removeItem(key));
                 alert('Cache cleared! Refreshing...');
                 location.reload();
             }
