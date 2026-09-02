@@ -12,7 +12,7 @@
     <meta http-equiv="Expires" content="0" />
 </head>
 <body>
-    <!-- (Keep your existing HTML structure unchanged) -->
+    <!-- HTML structure unchanged -->
     <div class="cursor-ring" id="cursorRing"></div>
     <div class="background">
         <div class="glow glow-one"></div>
@@ -79,12 +79,19 @@
             window.location.replace(window.location.pathname + '?t=' + Date.now());
         }
 
-        const CACHE_KEY = 'orion_drive_asset_cache_v10';
+        const CACHE_KEY = 'orion_drive_asset_cache_v11';
         const CACHE_TTL = 3600000;
 
-        // Remove old cache keys
-        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6', 'orion_drive_asset_cache_v7', 'orion_drive_asset_cache_v8', 'orion_drive_asset_cache_v9'].forEach(key => {
-            if (localStorage.getItem(key)) localStorage.removeItem(key);
+        // Remove all old cache keys
+        const oldKeys = [];
+        for (let i = 0; i < 20; i++) {
+            oldKeys.push(`orion_drive_asset_cache${i > 0 ? '_v' + i : ''}`);
+        }
+        oldKeys.forEach(key => {
+            if (localStorage.getItem(key)) {
+                console.log(`🗑️ Removing old cache: ${key}`);
+                localStorage.removeItem(key);
+            }
         });
 
         // ---------- UTILITY ----------
@@ -100,8 +107,11 @@
             return 'other';
         };
 
-        // ---------- PROXY URL (for both preview and download) ----------
-        const getProxyUrl = (id, mode = 'download') => `/api/download?id=${id}&mode=${mode}`;
+        // ---------- PROXY URL with filename ----------
+        const getProxyUrl = (id, mode, filename) => {
+            const encodedName = encodeURIComponent(filename || 'download');
+            return `/api/download?id=${id}&mode=${mode}&filename=${encodedName}`;
+        };
 
         // ---------- BACKEND ASSETS CALL ----------
         async function fetchAssetsFromBackend() {
@@ -169,8 +179,9 @@
         overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-        // ---------- DOWNLOAD (opens proxy URL in new tab) ----------
-        function downloadFile(url, filename) {
+        // ---------- DOWNLOAD ----------
+        function downloadFile(url) {
+            // Open in new tab – proxy will handle the filename
             window.open(url, '_blank');
         }
 
@@ -232,10 +243,10 @@
                         mimeType: mime,
                         size: f.size ? parseInt(f.size) : null,
                         displayUrl: displayUrl,
-                        // Preview: proxy with mode=preview
-                        previewUrl: (type === 'sound') ? getProxyUrl(f.id, 'preview') : null,
-                        // Download: proxy with mode=download (fixes filename issue)
-                        downloadUrl: getProxyUrl(f.id, 'download')
+                        // Preview: proxy with filename
+                        previewUrl: (type === 'sound') ? getProxyUrl(f.id, 'preview', f.name) : null,
+                        // Download: proxy with filename
+                        downloadUrl: getProxyUrl(f.id, 'download', f.name)
                     };
                 });
 
@@ -321,9 +332,9 @@
             grid.querySelectorAll('.asset-download-btn').forEach(btn => {
                 btn.addEventListener('click', e => {
                     e.stopPropagation();
-                    const url = btn.dataset.url, name = btn.dataset.name;
+                    const url = btn.dataset.url;
                     if (url && url !== '#') {
-                        downloadFile(url, name);
+                        downloadFile(url);
                     } else {
                         alert('Download link not available.');
                     }
@@ -370,7 +381,6 @@
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 localStorage.removeItem(CACHE_KEY);
-                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6', 'orion_drive_asset_cache_v7', 'orion_drive_asset_cache_v8', 'orion_drive_asset_cache_v9'].forEach(key => localStorage.removeItem(key));
                 alert('Cache cleared! Refreshing...');
                 location.reload();
             }
