@@ -179,6 +179,7 @@
                         // Show cache indicator
                         const indicator = document.createElement('div');
                         indicator.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);padding:4px 0;margin-top:-20px;opacity:0.6;';
+                        indicator.textContent = 'Loaded from cache • ' + new Date(parsed.timestamp).toLocaleTimeString();
                         const existing = document.querySelector('.cache-indicator');
                         if (existing) existing.remove();
                         const section = document.querySelector('.browse-section');
