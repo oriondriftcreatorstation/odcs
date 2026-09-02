@@ -64,18 +64,17 @@
         <img id="lightboxImage" src="" alt="Enlarged view" />
     </div>
 
-    <!-- ==================== UPDATED SCRIPT WITH BACKEND CACHING ==================== -->
+    <!-- ==================== UPDATED SCRIPT ==================== -->
     <script type="module">
         const CONFIG = {
-            apiKey: 'AIzaSyAuAd5udJQXQ19kwm7lLHgTFST2xiHh8NQ', // Used for media downloads
+            // No API key needed anymore! Using webContentLink from backend
         };
 
         // ---------- CACHE CONFIG ----------
         const CACHE_KEY = 'orion_drive_asset_cache';
-        const CACHE_TTL = 300000; // 5 minutes
+        const CACHE_TTL = 3600000; // 1 hour
 
         // ---------- UTILITY FUNCTIONS ----------
-        const getMediaUrl = (id, key) => `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${key}`;
         const formatSize = bytes => bytes ? (bytes < 1048576 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1048576).toFixed(1)+' MB') : '—';
         const getExt = name => name.split('.').pop().toLowerCase();
         const getBase = name => name.replace(/\.[^.]+$/, '');
@@ -163,15 +162,18 @@
 
         // ---------- CORE LOAD FUNCTION ----------
         async function loadAssets() {
-            const { apiKey } = CONFIG;
-            
             // 1. TRY READING FROM CACHE
             const cachedData = localStorage.getItem(CACHE_KEY);
             if (cachedData) {
                 try {
                     const parsed = JSON.parse(cachedData);
                     const now = Date.now();
-                    if (now - parsed.timestamp < CACHE_TTL) {
+                    
+                    // If timestamp is in the future, delete it
+                    if (parsed.timestamp > now) {
+                        console.warn('⚠️ Cache timestamp is in the future. Ignoring cache.');
+                        localStorage.removeItem(CACHE_KEY);
+                    } else if (now - parsed.timestamp < CACHE_TTL) {
                         console.log('✅ Serving assets from cache. Zero API calls made.');
                         allAssets = parsed.allAssets;
                         modelPreviewMap = new Map(parsed.modelPreviewMap);
@@ -179,7 +181,7 @@
                         // Show cache indicator
                         const indicator = document.createElement('div');
                         indicator.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);padding:4px 0;margin-top:-20px;opacity:0.6;';
-                        indicator.textContent = 'Loaded from cache • ' + new Date(parsed.timestamp).toLocaleTimeString();
+                        indicator.textContent = `⚡ Loaded from cache • ${new Date(parsed.timestamp).toLocaleTimeString()} (${Math.round((now - parsed.timestamp)/60000)} min ago)`;
                         const existing = document.querySelector('.cache-indicator');
                         if (existing) existing.remove();
                         const section = document.querySelector('.browse-section');
@@ -189,7 +191,7 @@
                         renderAssets();
                         return; // <-- EXIT EARLY – NO BACKEND CALL
                     } else {
-                        console.log('⏳ Cache expired. Fetching fresh data from backend...');
+                        console.log(`⏳ Cache expired. Fetching fresh data...`);
                     }
                 } catch (e) {
                     console.warn('Cache corrupted, fetching fresh data.');
@@ -202,21 +204,30 @@
 
                 const { assets, previews } = await fetchAssetsFromBackend();
 
-                // Build model preview map from previews
+                // Build model preview map from previews using webContentLink
                 modelPreviewMap.clear();
                 previews.forEach(f => {
                     const base = getBase(f.name);
-                    modelPreviewMap.set(base, getMediaUrl(f.id, apiKey));
+                    // Use the public web link directly
+                    modelPreviewMap.set(base, f.webContentLink || null);
                 });
 
-                // Build allAssets
+                // Build allAssets - using webContentLink from backend (no API key!)
                 const filteredAssets = assets.filter(f => !isFolder(f));
                 allAssets = filteredAssets.map(f => {
                     const base = getBase(f.name);
                     const mime = f.mimeType || '';
                     const type = getType(mime, f.name);
+                    
+                    // Get the public web link from the backend response
+                    const publicLink = f.webContentLink || null;
+                    
+                    // For models, try to find a preview image
                     const preview = (type === 'model') ? (modelPreviewMap.get(base) || null) : null;
-                    const displayUrl = (type === 'image' || type === 'model') ? (preview || getMediaUrl(f.id, apiKey)) : null;
+                    
+                    // Display URL: For images/models, use preview or public link
+                    const displayUrl = (type === 'image' || type === 'model') ? (preview || publicLink) : null;
+                    
                     return {
                         id: f.id,
                         title: f.name,
@@ -224,8 +235,8 @@
                         mimeType: mime,
                         size: f.size ? parseInt(f.size) : null,
                         displayUrl: displayUrl,
-                        previewUrl: (type === 'sound') ? getMediaUrl(f.id, apiKey) : null,
-                        downloadUrl: getMediaUrl(f.id, apiKey)
+                        previewUrl: (type === 'sound') ? publicLink : null,
+                        downloadUrl: publicLink // Use public link for downloads
                     };
                 });
 
@@ -236,7 +247,7 @@
                     modelPreviewMap: Array.from(modelPreviewMap.entries())
                 };
                 localStorage.setItem(CACHE_KEY, JSON.stringify(cachePayload));
-                console.log('💾 Fresh data saved to cache. Total assets:', allAssets.length);
+                console.log(`💾 Fresh data saved to cache. Total assets: ${allAssets.length}`);
 
                 // Remove cache indicator
                 const existing = document.querySelector('.cache-indicator');
@@ -355,6 +366,17 @@
 
         // ---------- START ----------
         loadAssets();
+
+        // ---------- DEBUG: Clear Cache Button ----------
+        const clearBtn = document.createElement('button');
+        clearBtn.textContent = '🗑️ Clear Cache';
+        clearBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#ff4444;color:white;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+        clearBtn.onclick = () => {
+            localStorage.removeItem(CACHE_KEY);
+            alert('Cache cleared! Refreshing...');
+            location.reload();
+        };
+        document.body.appendChild(clearBtn);
     </script>
 
     <!-- ==================== CURSOR & PROFILE (UNCHANGED) ==================== -->
