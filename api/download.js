@@ -1,12 +1,13 @@
 const { google } = require('googleapis');
 
 module.exports = async (req, res) => {
-    // Enable CORS for your frontend
+    // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
 
     const fileId = req.query.id;
-    const mode = req.query.mode || 'download'; // 'preview' or 'download'
+    const mode = req.query.mode || 'download';
+    const filename = req.query.filename || 'download';
 
     if (!fileId) {
         return res.status(400).json({ error: 'Missing file ID' });
@@ -32,13 +33,13 @@ module.exports = async (req, res) => {
 
         const drive = google.drive({ version: 'v3', auth });
 
-        // Get file metadata to know name and mime type
+        // Get file metadata for mime type and to verify access
         const fileMeta = await drive.files.get({
             fileId: fileId,
             fields: 'name,mimeType',
         });
 
-        const fileName = fileMeta.data.name;
+        const actualFileName = fileMeta.data.name || filename;
         const mimeType = fileMeta.data.mimeType || 'application/octet-stream';
 
         // Stream the file from Drive
@@ -47,18 +48,25 @@ module.exports = async (req, res) => {
             { responseType: 'stream' }
         );
 
-        // Set appropriate headers
-        res.setHeader('Content-Type', mimeType);
+        // --- CRITICAL: Set Content-Disposition with proper encoding ---
+        const encodedName = encodeURIComponent(actualFileName);
+        const safeName = actualFileName.replace(/"/g, '\\"');
         
         if (mode === 'preview') {
-            // For preview: try to display inline
-            res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+            res.setHeader('Content-Disposition', `inline; filename="${safeName}"; filename*=UTF-8''${encodedName}`);
         } else {
-            // For download: force download
-            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+            // Force download with correct filename
+            res.setHeader('Content-Disposition', `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`);
         }
+        
+        // Set content type
+        res.setHeader('Content-Type', mimeType);
+        // Disable caching for downloads
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
 
-        // Pipe the file stream to the response
+        // Pipe the file stream
         response.data.pipe(res);
 
     } catch (error) {
