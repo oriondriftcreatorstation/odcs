@@ -24,18 +24,15 @@ module.exports = async (req, res) => {
 
         const drive = google.drive({ version: 'v3', auth });
 
-        // Folder IDs
-        const assetFolderIds = [
-            '1YPHgDXLYrEz1-o52EQFKVBp5yHikOOca',
-            '1LWXuSRzD0ZqNRIrFRYDASbjOIqYm9kqo',
-            '1rMFkHSOaXA-uJwfBOqb9HUbiC4Z3ierq',
-        ];
+        // Individual folder IDs
+        const imageFolderId = '1YPHgDXLYrEz1-o52EQFKVBp5yHikOOca';
+        const soundFolderId = '1LWXuSRzD0ZqNRIrFRYDASbjOIqYm9kqo';
+        const modelFolderId = '1rMFkHSOaXA-uJwfBOqb9HUbiC4Z3ierq';
         const previewFolderId = '1p0Y83tqPEDloPIFndVJo2g3Kc_OOwQkg';
 
-        async function fetchFilesFromFolders(folderIds) {
-            if (!folderIds || folderIds.length === 0) return [];
-            const query = folderIds.map(id => `'${id}'+in+parents`).join('+or+');
-            console.log('📡 Fetching from Drive with query:', query);
+        async function fetchFilesFromFolder(folderId) {
+            const query = `'${folderId}'+in+parents`;
+            console.log(`📡 Fetching from folder: ${folderId}`);
             const response = await drive.files.list({
                 q: query,
                 fields: 'files(id,name,mimeType,size,parents)',
@@ -44,65 +41,70 @@ module.exports = async (req, res) => {
             return response.data.files || [];
         }
 
-        // Test: Check if we can get folder metadata
-        async function testFolderAccess(folderId) {
+        // Test each folder individually and return detailed results
+        let results = {
+            images: { folderId: imageFolderId, success: false, count: 0, error: null },
+            sounds: { folderId: soundFolderId, success: false, count: 0, error: null },
+            models: { folderId: modelFolderId, success: false, count: 0, error: null },
+            previews: { folderId: previewFolderId, success: false, count: 0, error: null },
+        };
+
+        // Try each folder
+        for (const [key, folderId] of Object.entries({
+            images: imageFolderId,
+            sounds: soundFolderId,
+            models: modelFolderId,
+            previews: previewFolderId
+        })) {
             try {
-                console.log(`🔍 Testing access to folder: ${folderId}`);
-                // Get the folder's metadata
-                const response = await drive.files.get({
-                    fileId: folderId,
-                    fields: 'id,name,webViewLink',
-                });
-                console.log(`✅ Folder accessible: ${response.data.name}`);
-                return true;
+                const files = await fetchFilesFromFolder(folderId);
+                const filtered = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+                results[key].success = true;
+                results[key].count = filtered.length;
+                console.log(`✅ ${key}: ${filtered.length} files`);
             } catch (error) {
-                console.error(`❌ Cannot access folder ${folderId}:`, error.message);
-                return false;
+                results[key].success = false;
+                results[key].error = error.message;
+                console.error(`❌ ${key}: ${error.message}`);
             }
         }
 
-        // Test preview folder access first
-        const previewAccess = await testFolderAccess(previewFolderId);
-        console.log(`Preview folder accessible? ${previewAccess}`);
-
-        // Fetch assets
-        let assetFiles = [];
-        try {
-            const assets = await fetchFilesFromFolders(assetFolderIds);
-            assetFiles = assets.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
-            console.log(`✅ Fetched ${assetFiles.length} assets`);
-        } catch (error) {
-            console.error('❌ Failed to fetch assets:', error.message);
-            return res.status(500).json({ 
-                error: 'Failed to fetch assets',
-                details: error.message 
-            });
-        }
-
-        // Fetch previews
+        // Build combined assets from successful folders
+        let allAssets = [];
         let previewFiles = [];
-        if (previewAccess) {
-            try {
-                const previews = await fetchFilesFromFolders([previewFolderId]);
-                previewFiles = previews.filter(f => f.mimeType.startsWith('image/'));
-                console.log(`✅ Fetched ${previewFiles.length} previews`);
-            } catch (error) {
-                console.warn('⚠️ Failed to fetch previews:', error.message);
+
+        // Collect assets from successful folders
+        for (const key of ['images', 'sounds', 'models']) {
+            if (results[key].success) {
+                try {
+                    const files = await fetchFilesFromFolder(results[key].folderId);
+                    const filtered = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+                    allAssets = [...allAssets, ...filtered];
+                } catch (e) {
+                    // already logged above
+                }
             }
-        } else {
-            console.warn('⚠️ Skipping preview fetch – folder not accessible');
+        }
+
+        // Get previews if successful
+        if (results.previews.success) {
+            try {
+                const files = await fetchFilesFromFolder(previewFolderId);
+                previewFiles = files.filter(f => f.mimeType.startsWith('image/'));
+            } catch (e) {
+                // already logged above
+            }
         }
 
         res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
         res.status(200).json({ 
-            assets: assetFiles, 
+            assets: allAssets,
             previews: previewFiles,
-            previewAccess: previewAccess // Let the frontend know if previews are working
+            testResults: results // This will tell us exactly which folders are working
         });
 
     } catch (error) {
         console.error('❌ Unhandled error:', error.message);
-        console.error('Stack:', error.stack);
         res.status(500).json({ 
             error: 'Internal server error',
             message: error.message
