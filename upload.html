@@ -4,247 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orion Drift Creator Station</title>
-
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/ODCS.png" />
     <link rel="apple-touch-icon" href="assets/ODCS.png" />
-
     <link rel="stylesheet" href="style.css" />
-
-    <!-- ===== Form & Navbar Profile Styles ===== -->
-    <style>
-        .form-container {
-            max-width: 520px;
-            margin: 35px auto 0;
-            text-align: left;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 5px;
-            letter-spacing: 0.01em;
-        }
-
-        .form-group label .optional {
-            font-weight: 400;
-            color: var(--muted);
-            font-size: 11px;
-            margin-left: 4px;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: "Inter", Arial, sans-serif;
-            font-size: 14px;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            outline: none;
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            border-color: rgba(255, 255, 255, 0.35);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .submit-button {
-            width: 100%;
-            padding: 14px 20px;
-            background: var(--accent);
-            color: #08090b;
-            font-family: "Inter", Arial, sans-serif;
-            font-size: 14px;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            margin-top: 6px;
-        }
-
-        .submit-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.08);
-        }
-
-        .submit-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        #formStatus {
-            margin-top: 18px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            text-align: center;
-            display: none;
-        }
-
-        #formStatus.success {
-            display: block;
-            background: rgba(46, 213, 115, 0.12);
-            color: #2ed573;
-            border: 1px solid rgba(46, 213, 115, 0.2);
-        }
-
-        #formStatus.error {
-            display: block;
-            background: rgba(255, 71, 87, 0.12);
-            color: #ff4757;
-            border: 1px solid rgba(255, 71, 87, 0.2);
-        }
-
-        #formStatus.loading {
-            display: block;
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--muted);
-            border: 1px solid var(--border);
-        }
-
-        /* ── Navbar Profile Styles ── */
-        .profile-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            position: relative;
-            padding: 4px 8px 4px 4px;
-            border-radius: 100px;
-            transition: background 0.2s;
-        }
-        .profile-container:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .profile-container img {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .profile-container .username {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text);
-        }
-        .profile-container .chevron {
-            opacity: 0.5;
-            transition: transform 0.2s;
-        }
-        .profile-container.open .chevron {
-            transform: rotate(180deg);
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 42px;
-            left: 0;
-            background: rgba(10, 12, 17, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 8px 0;
-            min-width: 180px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-            z-index: 100;
-        }
-        .dropdown-menu a {
-            display: block;
-            padding: 8px 16px;
-            color: var(--text);
-            font-size: 13px;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-        .dropdown-menu a:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .dropdown-menu .logout-item {
-            color: #ff4757;
-        }
-        .dropdown-menu .logout-item:hover {
-            background: rgba(255, 71, 87, 0.1);
-        }
-        .dropdown-menu.show {
-            display: block;
-        }
-
-        .login-nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 6px 14px;
-            border-radius: 100px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
-            transition: background 0.2s;
-        }
-        .login-nav-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        @media (max-width: 760px) {
-            .form-container {
-                max-width: 100%;
-                padding: 0 4px;
-            }
-            .profile-container .username {
-                display: none;
-            }
-        }
-    </style>
 </head>
 <body>
-
-    <!-- Custom Cursor -->
+    <!-- Cursor, Background, Navbar -->
     <div class="cursor-ring" id="cursorRing"></div>
-
-    <!-- Background -->
     <div class="background">
         <div class="glow glow-one"></div>
         <div class="glow glow-two"></div>
         <div class="grid"></div>
     </div>
 
-    <!-- Floating Pill Navbar -->
     <header class="navbar">
         <div class="pill">
-            <!-- Profile replaces the logo -->
-            <div id="navbarProfile">
-                <!-- Filled by JavaScript -->
-            </div>
-
+            <div id="navbarProfile"></div>
             <nav>
                 <a href="index.html">Home</a>
                 <a href="browse.html">Browse</a>
-                <a href="sounds.html">Sounds</a>
-                <a href="images.html">Images</a>
-                <a href="models.html">Models</a>
                 <a href="upload.html" class="active">Contact</a>
                 <a href="about.html">About</a>
             </nav>
@@ -254,289 +32,233 @@
     <!-- Hero + Form -->
     <main class="hero">
         <div class="hero-content">
-            <div class="eyebrow">
-                <span></span>
-                Orion Drift Creator Station
-            </div>
-
-            <h1>
-                Request an Asset
-            </h1>
-
+            <div class="eyebrow"><span></span>Orion Drift Creator Station</div>
+            <h1>Request an Asset</h1>
             <p>
-                This is for requesting assets only. If you need support, please contact the Modmail bot in our Discord server. <br><br>Fill out the form below to request an asset. Once submitted, a ticket will be created and we will respond shortly!
+                This is for requesting assets only. If you need support, please contact the Modmail bot in our Discord server.<br><br>
+                Fill out the form below to request an asset. Once submitted, a ticket will be created and we will respond shortly!
             </p>
 
-            <!-- ===== THE FORM ===== -->
             <div class="form-container">
                 <form id="discordForm">
-                    <!-- 1. Description (Reason) -->
                     <div class="form-group">
                         <label for="reason">Asset Description</label>
                         <textarea id="reason" placeholder="Describe the asset you want..&#10;e.g. Circuit Lounge model, Drifter model, etc." required></textarea>
                     </div>
-
-                    <!-- 2. Optional Upload Link -->
                     <div class="form-group">
-                        <label for="uploadLink">
-                            Upload Link
-                            <span class="optional">(optional - if you are supplying the asset)</span>
-                        </label>
+                        <label for="uploadLink">Upload Link <span class="optional">(optional - if you are supplying the asset)</span></label>
                         <input type="url" id="uploadLink" placeholder="https://example.com/my-asset.zip" />
                     </div>
-
-                    <button type="submit" class="submit-button" id="submitBtn">
-                        Submit Request
-                    </button>
+                    <button type="submit" class="submit-button" id="submitBtn">Submit Request</button>
                 </form>
-
                 <div id="formStatus"></div>
             </div>
         </div>
     </main>
 
     <script>
-        // ── Custom cursor with inversion effect ──
-        const cursorRing = document.getElementById('cursorRing');
-        let mouseX = 0,
-            mouseY = 0;
-        let ringX = 0,
-            ringY = 0;
-        let isHoveringInteractive = false;
+        // ── Custom Cursor ──
+        (function initCursor() {
+            const ring = document.getElementById('cursorRing');
+            let mx = 0, my = 0;
+            let rx = 0, ry = 0;
+            let hover = false;
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-
-            const target = e.target;
-            const isInteractive = target.closest('a') || target.closest('button') || target.closest('.pill') || target.closest('.primary-button') || target.closest('.submit-button') || target.closest('.login-nav-btn') || target.closest('.profile-container');
-            isHoveringInteractive = !!isInteractive;
-
-            if (isHoveringInteractive) {
-                cursorRing.style.width = '48px';
-                cursorRing.style.height = '48px';
-                cursorRing.style.border = '2px solid rgba(255,255,255,0.4)';
-                cursorRing.style.background = 'rgba(255,255,255,0.08)';
-                cursorRing.style.backdropFilter = 'blur(2px)';
-                cursorRing.style.mixBlendMode = 'normal';
-            } else {
-                cursorRing.style.width = '32px';
-                cursorRing.style.height = '32px';
-                cursorRing.style.border = 'none';
-                cursorRing.style.background = 'white';
-                cursorRing.style.backdropFilter = 'none';
-                cursorRing.style.mixBlendMode = 'difference';
-            }
-        });
-
-        function animateCursor() {
-            ringX += (mouseX - ringX) * 0.15;
-            ringY += (mouseY - ringY) * 0.15;
-            cursorRing.style.left = (ringX - cursorRing.offsetWidth / 2) + 'px';
-            cursorRing.style.top = (ringY - cursorRing.offsetHeight / 2) + 'px';
-            requestAnimationFrame(animateCursor);
-        }
-
-        document.body.style.cursor = 'none';
-
-        document.addEventListener('mouseleave', () => { cursorRing.style.opacity = '0'; });
-        document.addEventListener('mouseenter', () => { cursorRing.style.opacity = '1'; });
-
-        animateCursor();
-
-        // ─────────────────────────────────────────────
-        // ── NAVBAR PROFILE LOGIC ──
-        // ─────────────────────────────────────────────
-
-        const AUTH_BACKEND_URL = window.location.origin;
-        const navbarProfile = document.getElementById('navbarProfile');
-
-        function renderNavbarProfile() {
-            const user = JSON.parse(localStorage.getItem('discordUser'));
-
-            if (user) {
-                const avatarUrl = user.avatar
-                    ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
-                    : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
-
-                navbarProfile.innerHTML = `
-                    <div class="profile-container" id="profileDropdown">
-                        <img src="${avatarUrl}" alt="Avatar" />
-                        <span class="username">${user.username}</span>
-                        <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M6 8L1 3L11 3L6 8Z" fill="white"/>
-                        </svg>
-                        <div class="dropdown-menu" id="dropdownMenu">
-                            <a href="#" class="logout-item" onclick="logout()">Logout</a>
-                        </div>
-                    </div>
-                `;
-
-                // Dropdown toggle
-                const container = document.getElementById('profileDropdown');
-                const menu = document.getElementById('dropdownMenu');
-                container.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    container.classList.toggle('open');
-                    menu.classList.toggle('show');
-                });
-                document.addEventListener('click', () => {
-                    container.classList.remove('open');
-                    menu.classList.remove('show');
-                });
-
-                // Enable submit button
-                document.getElementById('submitBtn').disabled = false;
-                // Clear any "please login" message
-                const statusDiv = document.getElementById('formStatus');
-                if (statusDiv.textContent.includes('login')) {
-                    statusDiv.style.display = 'none';
-                }
-            } else {
-                navbarProfile.innerHTML = `
-                    <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
-                        <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/>
-                            <path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/>
-                        </svg>
-                        Login
-                    </a>
-                `;
-                // Disable submit button until logged in
-                document.getElementById('submitBtn').disabled = true;
-                const statusDiv = document.getElementById('formStatus');
-                statusDiv.textContent = 'Please login with Discord to submit a request.';
-                statusDiv.className = 'error';
-                statusDiv.style.display = 'block';
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('discordUser');
-            window.location.href = window.location.pathname;
-        }
-
-        // ─────────────────────────────────────────────
-        // ── DISCORD WEBHOOK FORM LOGIC ──
-        // ─────────────────────────────────────────────
-
-        // REPLACE with your actual Discord Webhook URL (Forum Channel)
-        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1544377650427076688/h3zKCeyJThKUJy-qPeyMuJZ7V2qw8khyaav4dEugK9CPRN_AcQ-bIAgB3P-D3gu2VNa_';
-
-        const form = document.getElementById('discordForm');
-        const statusDiv = document.getElementById('formStatus');
-        const submitBtn = document.getElementById('submitBtn');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const user = JSON.parse(localStorage.getItem('discordUser'));
-            if (!user) {
-                showStatus('Please login with Discord first.', 'error');
-                return;
-            }
-
-            const reason = document.getElementById('reason').value.trim();
-            const uploadLink = document.getElementById('uploadLink').value.trim();
-
-            if (!reason) {
-                showStatus('Please describe the asset you need.', 'error');
-                return;
-            }
-
-            // 1. Thread title: username (ID)
-            const threadName = `${user.username} (${user.id})`.slice(0, 100);
-
-            // 2. Build the embed
-            const embed = {
-                color: 0x5865F2,
-                author: {
-                    name: user.username,
-                    icon_url: user.avatar
-                        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-                        : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`
-                },
-                description: `**Asset Request:**\n${reason}`,
-                fields: [
-                    {
-                        name: 'Upload Link',
-                        value: uploadLink || 'None provided',
-                        inline: false
-                    },
-                    {
-                        name: 'Date Submitted',
-                        value: new Date().toLocaleString('en-US', { timeZone: 'EST' }),
-                        inline: false
-                    }
-                ],
-                footer: {
-                    text: 'User ID: ' + user.id
-                },
-                timestamp: new Date().toISOString()
-            };
-
-            const content = `<@${user.id}> submitted a new asset request!`;
-
-            const payload = {
-                thread_name: threadName,
-                content: content,
-                embeds: [embed]
-            };
-
-            submitBtn.disabled = true;
-            showStatus('Submitting request...', 'loading');
-
-            try {
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    showStatus('Request submitted! Check your tickets in Discord.', 'success');
-                    form.reset();
+            document.addEventListener('mousemove', e => {
+                mx = e.clientX;
+                my = e.clientY;
+                const target = e.target;
+                hover = !!target.closest('a, button, .pill, .primary-button, .submit-button, .login-nav-btn, .profile-container');
+                if (hover) {
+                    ring.style.width = '40px';
+                    ring.style.height = '40px';
+                    ring.style.border = '2px solid rgba(255,255,255,0.4)';
+                    ring.style.background = 'rgba(255,255,255,0.08)';
+                    ring.style.backdropFilter = 'blur(2px)';
+                    ring.style.mixBlendMode = 'normal';
                 } else {
-                    const errorText = await response.text();
-                    showStatus(`Discord error: ${errorText}`, 'error');
+                    ring.style.width = '24px';
+                    ring.style.height = '24px';
+                    ring.style.border = 'none';
+                    ring.style.background = 'white';
+                    ring.style.backdropFilter = 'none';
+                    ring.style.mixBlendMode = 'difference';
                 }
-            } catch (error) {
-                showStatus(`Network error: ${error.message}`, 'error');
-            } finally {
-                submitBtn.disabled = false;
+                document.body.style.cursor = 'none';
+            });
+
+            function anim() {
+                rx += (mx - rx) * 0.18;
+                ry += (my - ry) * 0.18;
+                ring.style.left = (rx - ring.offsetWidth / 2) + 'px';
+                ring.style.top = (ry - ring.offsetHeight / 2) + 'px';
+                requestAnimationFrame(anim);
             }
-        });
 
-        function showStatus(message, type) {
-            statusDiv.textContent = message;
-            statusDiv.className = type;
-            statusDiv.style.display = 'block';
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusDiv.style.display = 'none';
-                }, 10000);
-            }
-        }
+            document.documentElement.style.cursor = 'none';
+            document.body.style.cursor = 'none';
+            const style = document.createElement('style');
+            style.textContent = `
+                *,
+                *::before,
+                *::after {
+                    cursor: none !important;
+                }
+            `;
+            document.head.appendChild(style);
 
-        // ─────────────────────────────────────────────
-        // ── RUN ON PAGE LOAD ──
-        // ─────────────────────────────────────────────
+            document.addEventListener('mouseleave', () => { ring.style.opacity = '0'; });
+            document.addEventListener('mouseenter', () => { ring.style.opacity = '1'; });
 
-        // Handle OAuth redirect (username/id/avatar in URL)
-        (function handleRedirect() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const username = urlParams.get('username');
-            const id = urlParams.get('id');
-            const avatar = urlParams.get('avatar');
-
-            if (username && id) {
-                localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
-                const newUrl = window.location.pathname + window.location.hash;
-                window.history.replaceState({}, document.title, newUrl);
-            }
+            anim();
         })();
 
-        renderNavbarProfile();
+        // ── Profile ──
+        (function initProfile() {
+            const AUTH_BACKEND_URL = window.location.origin;
+            const container = document.getElementById('navbarProfile');
+
+            function render() {
+                const user = JSON.parse(localStorage.getItem('discordUser'));
+                if (user) {
+                    const avatar = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64` : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`;
+                    container.innerHTML = `
+                        <div class="profile-container" id="profileDropdown">
+                            <img src="${avatar}" alt="Avatar" />
+                            <span class="username">${user.username}</span>
+                            <svg class="chevron" width="12" height="12" viewBox="0 0 12 12"><path d="M6 8L1 3L11 3L6 8Z" fill="white"/></svg>
+                            <div class="dropdown-menu" id="dropdownMenu">
+                                <a href="#" class="logout-item" onclick="logout()">Logout</a>
+                            </div>
+                        </div>
+                    `;
+                    const dd = document.getElementById('profileDropdown');
+                    const menu = document.getElementById('dropdownMenu');
+                    dd.addEventListener('click', e => {
+                        e.stopPropagation();
+                        dd.classList.toggle('open');
+                        menu.classList.toggle('show');
+                    });
+                    document.addEventListener('click', () => {
+                        dd.classList.remove('open');
+                        menu.classList.remove('show');
+                    });
+                    document.getElementById('submitBtn').disabled = false;
+                    const status = document.getElementById('formStatus');
+                    if (status.textContent.includes('login')) { status.style.display = 'none'; }
+                } else {
+                    container.innerHTML = `
+                        <a href="${AUTH_BACKEND_URL}/api/login?return_to=${encodeURIComponent(window.location.pathname)}" class="login-nav-btn">
+                            <svg width="16" height="16" viewBox="0 0 28 28"><path d="M23.5 9.5C23.5 8.11929 22.3807 7 21 7H7C5.61929 7 4.5 8.11929 4.5 9.5V18.5C4.5 19.8807 5.61929 21 7 21H21C22.3807 21 23.5 19.8807 23.5 18.5V9.5Z" stroke="white" stroke-width="2"/><path d="M4.5 9L14 15.5L23.5 9" stroke="white" stroke-width="2"/></svg>
+                            Login
+                        </a>
+                    `;
+                    document.getElementById('submitBtn').disabled = true;
+                    const status = document.getElementById('formStatus');
+                    status.textContent = 'Please login with Discord to submit a request.';
+                    status.className = 'error';
+                    status.style.display = 'block';
+                }
+            }
+
+            window.logout = function() {
+                localStorage.removeItem('discordUser');
+                window.location.href = window.location.pathname;
+            };
+
+            (function handleRedirect() {
+                const params = new URLSearchParams(window.location.search);
+                const username = params.get('username');
+                const id = params.get('id');
+                const avatar = params.get('avatar');
+                if (username && id) {
+                    localStorage.setItem('discordUser', JSON.stringify({ username, id, avatar }));
+                    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+                }
+            })();
+
+            render();
+        })();
+
+        // ── Form Submission ──
+        (function initForm() {
+            const WEBHOOK_URL = 'https://discord.com/api/webhooks/1544377650427076688/h3zKCeyJThKUJy-qPeyMuJZ7V2qw8khyaav4dEugK9CPRN_AcQ-bIAgB3P-D3gu2VNa_';
+            const form = document.getElementById('discordForm');
+            const statusDiv = document.getElementById('formStatus');
+            const submitBtn = document.getElementById('submitBtn');
+
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+
+                const user = JSON.parse(localStorage.getItem('discordUser'));
+                if (!user) {
+                    showStatus('Please login with Discord first.', 'error');
+                    return;
+                }
+
+                const reason = document.getElementById('reason').value.trim();
+                const uploadLink = document.getElementById('uploadLink').value.trim();
+
+                if (!reason) {
+                    showStatus('Please describe the asset you need.', 'error');
+                    return;
+                }
+
+                const threadName = `${user.username} (${user.id})`.slice(0, 100);
+                const embed = {
+                    color: 0x5865F2,
+                    author: {
+                        name: user.username,
+                        icon_url: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : `https://cdn.discordapp.com/embed/avatars/${Number(user.id) % 5}.png`
+                    },
+                    description: `**Asset Request:**\n${reason}`,
+                    fields: [
+                        { name: 'Upload Link', value: uploadLink || 'None provided', inline: false },
+                        { name: 'Date Submitted', value: new Date().toLocaleString('en-US', { timeZone: 'EST' }), inline: false }
+                    ],
+                    footer: { text: 'User ID: ' + user.id },
+                    timestamp: new Date().toISOString()
+                };
+
+                const payload = {
+                    thread_name: threadName,
+                    content: `<@${user.id}> submitted a new asset request!`,
+                    embeds: [embed]
+                };
+
+                submitBtn.disabled = true;
+                showStatus('Submitting request...', 'loading');
+
+                try {
+                    const response = await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        showStatus('Request submitted! Check your tickets in Discord.', 'success');
+                        form.reset();
+                    } else {
+                        const errorText = await response.text();
+                        showStatus(`Discord error: ${errorText}`, 'error');
+                    }
+                } catch (error) {
+                    showStatus(`Network error: ${error.message}`, 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            function showStatus(message, type) {
+                statusDiv.textContent = message;
+                statusDiv.className = type;
+                statusDiv.style.display = 'block';
+                if (type === 'success') {
+                    setTimeout(() => { statusDiv.style.display = 'none'; }, 10000);
+                }
+            }
+        })();
     </script>
 </body>
 </html>
