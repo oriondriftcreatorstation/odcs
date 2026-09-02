@@ -6,6 +6,6 @@
     "node": "22.x"
   },
   "dependencies": {
-    "google-auth-library": "^9.0.0"
+    "googleapis": "^133.0.0"
   }
 }
