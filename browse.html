@@ -64,6 +64,7 @@
         <img id="lightboxImage" src="" alt="Enlarged view" />
     </div>
 
+    <!-- ==================== UPDATED SCRIPT WITH CACHING ==================== -->
     <script type="module">
         const CONFIG = {
             apiKey: 'AIzaSyAuAd5udJQXQ19kwm7lLHgTFST2xiHh8NQ',
@@ -75,6 +76,11 @@
             modelPreviewFolderId: '1p0Y83tqPEDloPIFndVJo2g3Kc_OOwQkg'
         };
 
+        // ---------- CACHE CONFIG ----------
+        const CACHE_KEY = 'orion_drive_asset_cache';
+        const CACHE_TTL = 300000; // 5 minutes (change to 60000 for 1 min, 3600000 for 1 hour, etc.)
+
+        // ---------- UTILITY FUNCTIONS ----------
         const getMediaUrl = (id, key) => `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${key}`;
         const formatSize = bytes => bytes ? (bytes < 1048576 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1048576).toFixed(1)+' MB') : '—';
         const getExt = name => name.split('.').pop().toLowerCase();
@@ -83,9 +89,13 @@
         const isSupported = f => !isFolder(f) && (f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('audio/') || ['glb','gltf','obj','stl','fbx'].includes(getExt(f.name)) || f.mimeType?.includes('model') || f.mimeType === 'application/octet-stream');
         const getType = (mime, name) => mime.startsWith('image/') ? 'image' : mime.startsWith('audio/') ? 'sound' : (['glb','gltf','obj','stl','fbx'].includes(getExt(name)) || mime.includes('model') || mime === 'application/octet-stream') ? 'model' : 'other';
 
-        async function fetchFolder(folderId, apiKey) {
-            if (!folderId) return [];
-            const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&key=${apiKey}&fields=files(id,name,mimeType,size,webContentLink,thumbnailLink)`;
+        // ---------- GOOGLE DRIVE FETCH (OPTIMIZED: 1 SINGLE CALL) ----------
+        async function fetchAllAssetsFromDrive(apiKey, folderIds) {
+            // Build a query that searches all 3 folders in ONE request
+            const folderIdList = Object.values(folderIds).filter(id => id);
+            const query = folderIdList.map(id => `'${id}'+in+parents`).join('+or+');
+            const url = `https://www.googleapis.com/drive/v3/files?q=${query}&key=${apiKey}&fields=files(id,name,mimeType,size,webContentLink,thumbnailLink)`;
+            
             const res = await fetch(url);
             if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
             const data = await res.json();
@@ -101,12 +111,14 @@
             return (data.files || []).filter(f => f.mimeType?.startsWith('image/'));
         }
 
+        // ---------- STATE ----------
         let allAssets = [];
         let currentFilter = 'all';
         let currentSearch = '';
         let modelPreviewMap = new Map();
         let currentAudio = null, currentPlayingBtn = null;
 
+        // ---------- DOM REFS ----------
         const grid = document.getElementById('assetGrid');
         const filterPills = document.querySelectorAll('.filter-pill');
         const searchInput = document.getElementById('searchInput');
@@ -114,6 +126,7 @@
         const lightboxImg = document.getElementById('lightboxImage');
         const closeBtn = document.getElementById('lightboxClose');
 
+        // ---------- AUDIO / LIGHTBOX ----------
         function stopAudio() {
             if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
             if (currentPlayingBtn) { currentPlayingBtn.textContent = '▶ Preview'; currentPlayingBtn.classList.remove('playing'); currentPlayingBtn = null; }
@@ -145,6 +158,7 @@
         overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
+        // ---------- DOWNLOAD ----------
         async function downloadFile(url, filename) {
             try {
                 const res = await fetch(url);
@@ -162,19 +176,54 @@
             }
         }
 
+        // ---------- CORE LOAD FUNCTION (WITH CACHE) ----------
         async function loadAssets() {
             const { apiKey, folderIds, modelPreviewFolderId } = CONFIG;
+            
             if (apiKey === 'YOUR_API_KEY' || !folderIds.images || !folderIds.sounds || !folderIds.models) {
                 grid.innerHTML = `<div class="no-results"><div class="big-icon">⚙️</div><h3>Configuration missing</h3><p>Error - No Results</p></div>`;
                 return;
             }
-            try {
-                const [images, sounds, models] = await Promise.all([
-                    fetchFolder(folderIds.images, apiKey),
-                    fetchFolder(folderIds.sounds, apiKey),
-                    fetchFolder(folderIds.models, apiKey)
-                ]);
 
+            // 1. TRY READING FROM CACHE
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                try {
+                    const parsed = JSON.parse(cachedData);
+                    const now = Date.now();
+                    if (now - parsed.timestamp < CACHE_TTL) {
+                        console.log('✅ Serving assets from cache. Zero API calls made.');
+                        allAssets = parsed.allAssets;
+                        modelPreviewMap = new Map(parsed.modelPreviewMap);
+                        
+                        // Show a subtle "cached" indicator
+                        const indicator = document.createElement('div');
+                        indicator.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);padding:4px 0;margin-top:-20px;opacity:0.6;';
+                        indicator.textContent = '⚡ Loaded from cache • ' + new Date(parsed.timestamp).toLocaleTimeString();
+                        const existing = document.querySelector('.cache-indicator');
+                        if (existing) existing.remove();
+                        const section = document.querySelector('.browse-section');
+                        section.insertBefore(indicator, section.firstChild);
+                        indicator.classList.add('cache-indicator');
+                        
+                        renderAssets();
+                        return; // <-- EXIT EARLY – NO API CALLS
+                    } else {
+                        console.log('⏳ Cache expired. Fetching fresh data from Drive...');
+                    }
+                } catch (e) {
+                    console.warn('Cache corrupted, fetching fresh data.');
+                }
+            }
+
+            // 2. NO CACHE OR EXPIRED → FETCH FROM DRIVE (1 SINGLE REQUEST FOR ALL FOLDERS)
+            try {
+                grid.innerHTML = `<div class="loading-grid"><div class="spinner"></div><span style="color:var(--muted);font-size:14px;">Fetching latest assets...</span></div>`;
+
+                // Fetch ALL files from ALL folders in ONE API call
+                const files = await fetchAllAssetsFromDrive(apiKey, folderIds);
+
+                // Fetch preview images for models (separate call, but only 1)
                 modelPreviewMap.clear();
                 if (modelPreviewFolderId) {
                     const previews = await fetchPreviews(modelPreviewFolderId, apiKey);
@@ -184,22 +233,47 @@
                     });
                 }
 
-                allAssets = [
-                    ...images.map(f => ({ id: f.id, title: f.name, type: 'image', mimeType: f.mimeType, size: f.size ? parseInt(f.size) : null, displayUrl: getMediaUrl(f.id, apiKey), downloadUrl: getMediaUrl(f.id, apiKey) })),
-                    ...sounds.map(f => ({ id: f.id, title: f.name, type: 'sound', mimeType: f.mimeType, size: f.size ? parseInt(f.size) : null, previewUrl: getMediaUrl(f.id, apiKey), downloadUrl: getMediaUrl(f.id, apiKey) })),
-                    ...models.map(f => {
-                        const base = getBase(f.name);
-                        const preview = modelPreviewMap.get(base) || null;
-                        return { id: f.id, title: f.name, type: 'model', mimeType: f.mimeType, size: f.size ? parseInt(f.size) : null, displayUrl: preview, downloadUrl: getMediaUrl(f.id, apiKey), previewUrl: preview };
-                    })
-                ];
+                // Build the asset list
+                allAssets = files.map(f => {
+                    const base = getBase(f.name);
+                    const mime = f.mimeType || '';
+                    const type = getType(mime, f.name);
+                    const preview = (type === 'model') ? (modelPreviewMap.get(base) || null) : null;
+                    const displayUrl = (type === 'image' || type === 'model') ? (preview || getMediaUrl(f.id, apiKey)) : null;
+                    
+                    return {
+                        id: f.id,
+                        title: f.name,
+                        type: type,
+                        mimeType: mime,
+                        size: f.size ? parseInt(f.size) : null,
+                        displayUrl: displayUrl,
+                        previewUrl: (type === 'sound') ? getMediaUrl(f.id, apiKey) : null,
+                        downloadUrl: getMediaUrl(f.id, apiKey)
+                    };
+                });
+
+                // 3. SAVE TO CACHE
+                const cachePayload = {
+                    timestamp: Date.now(),
+                    allAssets: allAssets,
+                    modelPreviewMap: Array.from(modelPreviewMap.entries())
+                };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cachePayload));
+                console.log('💾 Fresh data saved to cache. Total assets:', allAssets.length);
+
+                // Remove any cache indicator
+                const existing = document.querySelector('.cache-indicator');
+                if (existing) existing.remove();
+
                 renderAssets();
             } catch (error) {
                 console.error(error);
-                grid.innerHTML = `<div class="no-results"><div class="big-icon"></div><h3>Could not load assets</h3><p>${error.message}</p></div>`;
+                grid.innerHTML = `<div class="no-results"><div class="big-icon">⚠️</div><h3>Could not load assets</h3><p>${error.message}</p></div>`;
             }
         }
 
+        // ---------- RENDER ----------
         function renderAssets() {
             const filtered = allAssets.filter(a => {
                 const matchType = currentFilter === 'all' || a.type === currentFilter;
@@ -261,6 +335,7 @@
                 `;
             }).join('');
 
+            // Attach event listeners
             grid.querySelectorAll('.asset-download-btn').forEach(btn => {
                 btn.addEventListener('click', e => {
                     e.stopPropagation();
@@ -287,6 +362,7 @@
             });
         }
 
+        // ---------- FILTER & SEARCH ----------
         filterPills.forEach(pill => {
             pill.addEventListener('click', () => {
                 stopAudio();
@@ -302,9 +378,11 @@
             renderAssets();
         });
 
+        // ---------- START ----------
         loadAssets();
     </script>
 
+    <!-- ==================== CURSOR & PROFILE (UNCHANGED) ==================== -->
     <script>
         (function initCursor() {
             const ring = document.getElementById('cursorRing');
