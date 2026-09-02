@@ -19,7 +19,6 @@ module.exports = async (req, res) => {
             return res.status(500).json({ error: 'Invalid service account JSON.' });
         }
 
-        // Auth using service account
         const auth = new google.auth.GoogleAuth({
             credentials: creds,
             scopes: ['https://www.googleapis.com/auth/drive.readonly'],
@@ -39,18 +38,17 @@ module.exports = async (req, res) => {
             try {
                 const response = await drive.files.list({
                     q: `'${folderId}' in parents`,
+                    // ✅ ADDED webContentLink to fields!
                     fields: 'files(id,name,mimeType,size,webContentLink,thumbnailLink)',
                     pageSize: 1000,
                 });
                 return response.data.files || [];
             } catch (error) {
                 console.error(`❌ Error fetching folder ${folderId}:`, error.message);
-                // If it fails, return empty array
                 return [];
             }
         }
 
-        // Fetch all folders in parallel
         console.log('🔍 Fetching assets from Drive...');
         const [imageFiles, soundFiles, modelFiles, previewFiles] = await Promise.all([
             fetchFilesFromFolder(folders[0].id),
@@ -59,7 +57,6 @@ module.exports = async (req, res) => {
             fetchFilesFromFolder(previewFolderId),
         ]);
 
-        // Filter out actual folders (just in case)
         const images = imageFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
         const sounds = soundFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
         const models = modelFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
@@ -70,7 +67,6 @@ module.exports = async (req, res) => {
         console.log(`✅ Images: ${images.length}, Sounds: ${sounds.length}, Models: ${models.length}, Previews: ${previews.length}`);
         console.log(`✅ Total assets: ${allAssets.length}`);
 
-        // Cache on Vercel's CDN for 5 minutes
         res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
 
         res.status(200).json({ 
