@@ -7,7 +7,6 @@
     <link rel="icon" type="image/png" href="assets/ODCS.png" />
     <link rel="apple-touch-icon" href="assets/ODCS.png" />
     <link rel="stylesheet" href="style.css" />
-    <!-- Force browsers to always fetch fresh HTML -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -81,12 +80,13 @@
             window.location.replace(cleanUrl);
         }
 
-        // ---------- CACHE CONFIG ----------
-        const CACHE_KEY = 'orion_drive_asset_cache_v4'; // Incremented to force fresh cache
+        // ---------- CONFIG ----------
+        const API_KEY = 'AIzaSyAuAd5udJQXQ19kwm7lLHgTFST2xiHh8NQ';
+        const CACHE_KEY = 'orion_drive_asset_cache_v5';
         const CACHE_TTL = 3600000; // 1 hour
 
         // ---------- DELETE OLD CACHE KEYS ----------
-        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3'].forEach(key => {
+        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4'].forEach(key => {
             if (localStorage.getItem(key)) {
                 console.log(`🗑️ Removing old cache: ${key}`);
                 localStorage.removeItem(key);
@@ -106,12 +106,15 @@
             return 'other';
         };
 
+        // ---------- Build media URL using API key (for audio & downloads only) ----------
+        const getMediaUrl = (id) => `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`;
+
         // ---------- BACKEND API CALL ----------
         async function fetchAssetsFromBackend() {
             const res = await fetch('/api/assets');
             if (!res.ok) throw new Error(`Backend error: ${res.status} ${res.statusText}`);
             const data = await res.json();
-            return data; // { assets: [...], previews: [...] }
+            return data;
         }
 
         // ---------- STATE ----------
@@ -193,7 +196,6 @@
                         console.log('✅ Serving assets from cache. Zero API calls made.');
                         allAssets = parsed.allAssets;
                         modelPreviewMap = new Map(parsed.modelPreviewMap);
-                        // Show indicator
                         const indicator = document.createElement('div');
                         indicator.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);padding:4px 0;margin-top:-20px;opacity:0.6;';
                         const ageMin = Math.round((now - parsed.timestamp) / 60000);
@@ -216,11 +218,10 @@
 
                 const { assets, previews } = await fetchAssetsFromBackend();
 
-                // Build model preview map using thumbnailLink if available (fallback to webContentLink)
+                // Build model preview map
                 modelPreviewMap.clear();
                 previews.forEach(f => {
                     const base = getBase(f.name);
-                    // Prefer thumbnailLink for display, fallback to webContentLink
                     const previewUrl = f.thumbnailLink || f.webContentLink || null;
                     modelPreviewMap.set(base, previewUrl);
                 });
@@ -234,12 +235,13 @@
                     const publicLink = f.webContentLink || null;
                     const thumbLink = f.thumbnailLink || null;
 
-                    // For images: use thumbnailLink (better CORS) or fallback to publicLink
-                    const displayUrl = (type === 'image') ? (thumbLink || publicLink) : null;
-                    // For models: use preview from modelPreviewMap or thumbnailLink or publicLink
-                    const modelPreview = (type === 'model') ? (modelPreviewMap.get(base) || thumbLink || publicLink) : null;
-                    // For sounds: no display image
-                    const finalDisplay = (type === 'image') ? displayUrl : (type === 'model' ? modelPreview : null);
+                    // Display URL: use thumbnailLink for images (avoids ORB)
+                    let displayUrl = null;
+                    if (type === 'image') {
+                        displayUrl = thumbLink || publicLink;
+                    } else if (type === 'model') {
+                        displayUrl = modelPreviewMap.get(base) || thumbLink || publicLink;
+                    }
 
                     return {
                         id: f.id,
@@ -247,9 +249,11 @@
                         type: type,
                         mimeType: mime,
                         size: f.size ? parseInt(f.size) : null,
-                        displayUrl: finalDisplay,
-                        previewUrl: (type === 'sound') ? publicLink : null,
-                        downloadUrl: publicLink
+                        displayUrl: displayUrl,
+                        // For audio: use alt=media with API key (ORB-safe)
+                        previewUrl: (type === 'sound') ? getMediaUrl(f.id) : null,
+                        // For downloads: use alt=media with API key (ORB-safe)
+                        downloadUrl: getMediaUrl(f.id)
                     };
                 });
 
@@ -382,7 +386,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 localStorage.removeItem(CACHE_KEY);
-                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3'].forEach(key => localStorage.removeItem(key));
+                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4'].forEach(key => localStorage.removeItem(key));
                 alert('Cache cleared! Refreshing...');
                 location.reload();
             }
