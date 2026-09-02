@@ -12,6 +12,7 @@
     <meta http-equiv="Expires" content="0" />
 </head>
 <body>
+    <!-- (HTML structure unchanged – keep your existing header/hero/section/lightbox) -->
     <div class="cursor-ring" id="cursorRing"></div>
     <div class="background">
         <div class="glow glow-one"></div>
@@ -68,31 +69,25 @@
     </div>
 
     <script type="module">
-        // ---------- FORCE RESET IF ?reset=1 ----------
+        // ---------- RESET ----------
         if (window.location.search.includes('reset=1')) {
-            console.log('🧹 Reset requested – clearing all caches...');
             localStorage.clear();
             sessionStorage.clear();
             document.cookie.split(';').forEach(c => {
                 document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=; expires=' + new Date().toUTCString() + '; path=/');
             });
-            const cleanUrl = window.location.pathname + '?t=' + Date.now();
-            window.location.replace(cleanUrl);
+            window.location.replace(window.location.pathname + '?t=' + Date.now());
         }
 
-        // ---------- CACHE CONFIG ----------
-        const CACHE_KEY = 'orion_drive_asset_cache_v7';
-        const CACHE_TTL = 3600000; // 1 hour
+        const CACHE_KEY = 'orion_drive_asset_cache_v8';
+        const CACHE_TTL = 3600000;
 
-        // ---------- DELETE OLD CACHE KEYS ----------
-        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6'].forEach(key => {
-            if (localStorage.getItem(key)) {
-                console.log(`🗑️ Removing old cache: ${key}`);
-                localStorage.removeItem(key);
-            }
+        // Remove old cache keys
+        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6', 'orion_drive_asset_cache_v7'].forEach(key => {
+            if (localStorage.getItem(key)) localStorage.removeItem(key);
         });
 
-        // ---------- UTILITY FUNCTIONS ----------
+        // ---------- UTILITY ----------
         const formatSize = bytes => bytes ? (bytes < 1048576 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1048576).toFixed(1)+' MB') : '—';
         const getExt = name => name.split('.').pop().toLowerCase();
         const getBase = name => name.replace(/\.[^.]+$/, '');
@@ -105,10 +100,13 @@
             return 'other';
         };
 
-        // ---------- BACKEND API CALL ----------
+        // ---------- PROXY URL ----------
+        const getProxyUrl = (id, mode = 'download') => `/api/download?id=${id}&mode=${mode}`;
+
+        // ---------- BACKEND ASSETS CALL ----------
         async function fetchAssetsFromBackend() {
             const res = await fetch('/api/assets');
-            if (!res.ok) throw new Error(`Backend error: ${res.status} ${res.statusText}`);
+            if (!res.ok) throw new Error(`Backend error: ${res.status}`);
             const data = await res.json();
             return data;
         }
@@ -128,7 +126,7 @@
         const lightboxImg = document.getElementById('lightboxImage');
         const closeBtn = document.getElementById('lightboxClose');
 
-        // ---------- AUDIO / LIGHTBOX ----------
+        // ---------- AUDIO ----------
         function stopAudio() {
             if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
             if (currentPlayingBtn) { currentPlayingBtn.textContent = '▶ Preview'; currentPlayingBtn.classList.remove('playing'); currentPlayingBtn = null; }
@@ -137,10 +135,10 @@
         function toggleAudio(url, btn) {
             if (currentPlayingBtn === btn) { stopAudio(); return; }
             stopAudio();
-            // Create audio element with crossOrigin attribute to help with CORS
+            // Use proxy URL for audio preview
             currentAudio = new Audio(url);
             currentAudio.crossOrigin = 'anonymous';
-            currentAudio.addEventListener('ended', () => { stopAudio(); });
+            currentAudio.addEventListener('ended', () => stopAudio());
             currentAudio.addEventListener('error', (e) => {
                 console.warn('Audio error:', e);
                 stopAudio();
@@ -156,6 +154,7 @@
             currentPlayingBtn = btn;
         }
 
+        // ---------- LIGHTBOX ----------
         function openLightbox(src) {
             if (!src) return;
             lightboxImg.src = src;
@@ -171,12 +170,12 @@
         overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-        // ---------- DOWNLOAD (direct navigation) ----------
+        // ---------- DOWNLOAD ----------
         function downloadFile(url, filename) {
             window.open(url, '_blank');
         }
 
-        // ---------- CORE LOAD FUNCTION ----------
+        // ---------- LOAD ASSETS ----------
         async function loadAssets() {
             const cachedData = localStorage.getItem(CACHE_KEY);
             if (cachedData) {
@@ -184,10 +183,9 @@
                     const parsed = JSON.parse(cachedData);
                     const now = Date.now();
                     if (parsed.timestamp > now) {
-                        console.warn('⚠️ Cache timestamp in future. Ignoring.');
                         localStorage.removeItem(CACHE_KEY);
                     } else if (now - parsed.timestamp < CACHE_TTL) {
-                        console.log('✅ Serving assets from cache. Zero API calls made.');
+                        console.log('✅ Serving from cache');
                         allAssets = parsed.allAssets;
                         modelPreviewMap = new Map(parsed.modelPreviewMap);
                         const indicator = document.createElement('div');
@@ -202,68 +200,54 @@
                         renderAssets();
                         return;
                     }
-                } catch (e) {
-                    console.warn('Cache corrupted, fetching fresh.');
-                }
+                } catch (e) {}
             }
 
             try {
                 grid.innerHTML = `<div class="loading-grid"><div class="spinner"></div><span style="color:var(--muted);font-size:14px;">Loading assets...</span></div>`;
-
                 const { assets, previews } = await fetchAssetsFromBackend();
 
-                // Build model preview map
+                // Build model previews (keep using thumbnailLink)
                 modelPreviewMap.clear();
                 previews.forEach(f => {
                     const base = getBase(f.name);
-                    const previewUrl = f.thumbnailLink || f.webContentLink || null;
-                    modelPreviewMap.set(base, previewUrl);
+                    modelPreviewMap.set(base, f.thumbnailLink || f.webContentLink || null);
                 });
 
-                // Build allAssets
-                const filteredAssets = assets.filter(f => !isFolder(f));
-                allAssets = filteredAssets.map(f => {
+                const filtered = assets.filter(f => !isFolder(f));
+                allAssets = filtered.map(f => {
                     const base = getBase(f.name);
                     const mime = f.mimeType || '';
                     const type = getType(mime, f.name);
-                    const publicLink = f.webContentLink || null; // export=download
                     const thumbLink = f.thumbnailLink || null;
+                    const publicLink = f.webContentLink || null;
 
-                    // Display URL: use thumbnailLink for images (avoids ORB)
+                    // For display: use thumbnailLink (ORB-safe)
                     let displayUrl = null;
-                    if (type === 'image') {
-                        displayUrl = thumbLink || publicLink;
-                    } else if (type === 'model') {
-                        displayUrl = modelPreviewMap.get(base) || thumbLink || publicLink;
-                    }
-
-                    // Audio preview: use export=media for streaming
-                    let previewUrl = null;
-                    if (type === 'sound') {
-                        previewUrl = `https://drive.google.com/uc?export=media&id=${f.id}`;
-                    }
+                    if (type === 'image') displayUrl = thumbLink || publicLink;
+                    else if (type === 'model') displayUrl = modelPreviewMap.get(base) || thumbLink || publicLink;
 
                     return {
                         id: f.id,
                         title: f.name,
-                        type: type,
+                        type,
                         mimeType: mime,
                         size: f.size ? parseInt(f.size) : null,
                         displayUrl: displayUrl,
-                        previewUrl: previewUrl,
-                        // Download uses export=download (already in publicLink)
-                        downloadUrl: publicLink
+                        // Use proxy for audio preview (mode=preview)
+                        previewUrl: (type === 'sound') ? getProxyUrl(f.id, 'preview') : null,
+                        // Use proxy for download (mode=download)
+                        downloadUrl: getProxyUrl(f.id, 'download')
                     };
                 });
 
-                // Save to cache
                 const cachePayload = {
                     timestamp: Date.now(),
-                    allAssets: allAssets,
+                    allAssets,
                     modelPreviewMap: Array.from(modelPreviewMap.entries())
                 };
                 localStorage.setItem(CACHE_KEY, JSON.stringify(cachePayload));
-                console.log(`💾 Fresh data saved. Total assets: ${allAssets.length}`);
+                console.log(`💾 Saved ${allAssets.length} assets to cache.`);
 
                 const existing = document.querySelector('.cache-indicator');
                 if (existing) existing.remove();
@@ -388,7 +372,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 localStorage.removeItem(CACHE_KEY);
-                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6'].forEach(key => localStorage.removeItem(key));
+                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3', 'orion_drive_asset_cache_v4', 'orion_drive_asset_cache_v5', 'orion_drive_asset_cache_v6', 'orion_drive_asset_cache_v7'].forEach(key => localStorage.removeItem(key));
                 alert('Cache cleared! Refreshing...');
                 location.reload();
             }
