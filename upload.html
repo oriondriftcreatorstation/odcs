@@ -237,7 +237,7 @@
                     });
 
                     if (response.ok) {
-                        showStatus('Request submitted! Check your tickets in Discord.', 'success');
+                        showStatus('Ticket submitted.', 'success');
                         form.reset();
                     } else {
                         const errorText = await response.text();
