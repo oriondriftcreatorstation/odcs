@@ -69,16 +69,29 @@
     </div>
 
     <script type="module">
-        // ---------- NEW CACHE KEY – forces fresh cache ----------
-        const CACHE_KEY = 'orion_drive_asset_cache_v2';  // <-- CHANGED!
+        // ---------- FORCE RESET IF ?reset=1 ----------
+        if (window.location.search.includes('reset=1')) {
+            console.log('🧹 Reset requested – clearing all caches...');
+            localStorage.clear();
+            sessionStorage.clear();
+            document.cookie.split(';').forEach(c => {
+                document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=; expires=' + new Date().toUTCString() + '; path=/');
+            });
+            const cleanUrl = window.location.pathname + '?t=' + Date.now();
+            window.location.replace(cleanUrl);
+        }
+
+        // ---------- CACHE CONFIG ----------
+        const CACHE_KEY = 'orion_drive_asset_cache_v4'; // Incremented to force fresh cache
         const CACHE_TTL = 3600000; // 1 hour
 
-        // ---------- DELETE OLD CACHE IF EXISTS ----------
-        const oldKey = 'orion_drive_asset_cache';
-        if (localStorage.getItem(oldKey)) {
-            console.log('🗑️ Removing old cache (version 1)');
-            localStorage.removeItem(oldKey);
-        }
+        // ---------- DELETE OLD CACHE KEYS ----------
+        ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3'].forEach(key => {
+            if (localStorage.getItem(key)) {
+                console.log(`🗑️ Removing old cache: ${key}`);
+                localStorage.removeItem(key);
+            }
+        });
 
         // ---------- UTILITY FUNCTIONS ----------
         const formatSize = bytes => bytes ? (bytes < 1048576 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1048576).toFixed(1)+' MB') : '—';
@@ -168,22 +181,19 @@
 
         // ---------- CORE LOAD FUNCTION ----------
         async function loadAssets() {
-            // 1. TRY READING FROM NEW CACHE
             const cachedData = localStorage.getItem(CACHE_KEY);
             if (cachedData) {
                 try {
                     const parsed = JSON.parse(cachedData);
                     const now = Date.now();
-                    
                     if (parsed.timestamp > now) {
-                        console.warn('⚠️ Cache timestamp is in the future. Ignoring cache.');
+                        console.warn('⚠️ Cache timestamp in future. Ignoring.');
                         localStorage.removeItem(CACHE_KEY);
                     } else if (now - parsed.timestamp < CACHE_TTL) {
                         console.log('✅ Serving assets from cache. Zero API calls made.');
                         allAssets = parsed.allAssets;
                         modelPreviewMap = new Map(parsed.modelPreviewMap);
-                        
-                        // Show cache indicator
+                        // Show indicator
                         const indicator = document.createElement('div');
                         indicator.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);padding:4px 0;margin-top:-20px;opacity:0.6;';
                         const ageMin = Math.round((now - parsed.timestamp) / 60000);
@@ -193,62 +203,67 @@
                         const section = document.querySelector('.browse-section');
                         section.insertBefore(indicator, section.firstChild);
                         indicator.classList.add('cache-indicator');
-                        
                         renderAssets();
-                        return; // <-- EXIT EARLY – NO BACKEND CALL
+                        return;
                     }
                 } catch (e) {
-                    console.warn('Cache corrupted, fetching fresh data.');
+                    console.warn('Cache corrupted, fetching fresh.');
                 }
             }
 
-            // 2. NO CACHE OR EXPIRED → FETCH FROM BACKEND
             try {
                 grid.innerHTML = `<div class="loading-grid"><div class="spinner"></div><span style="color:var(--muted);font-size:14px;">Loading assets...</span></div>`;
 
                 const { assets, previews } = await fetchAssetsFromBackend();
 
-                // Build model preview map from previews using webContentLink
+                // Build model preview map using thumbnailLink if available (fallback to webContentLink)
                 modelPreviewMap.clear();
                 previews.forEach(f => {
                     const base = getBase(f.name);
-                    modelPreviewMap.set(base, f.webContentLink || null);
+                    // Prefer thumbnailLink for display, fallback to webContentLink
+                    const previewUrl = f.thumbnailLink || f.webContentLink || null;
+                    modelPreviewMap.set(base, previewUrl);
                 });
 
-                // Build allAssets - using webContentLink from backend (NO API KEY!)
+                // Build allAssets
                 const filteredAssets = assets.filter(f => !isFolder(f));
                 allAssets = filteredAssets.map(f => {
                     const base = getBase(f.name);
                     const mime = f.mimeType || '';
                     const type = getType(mime, f.name);
                     const publicLink = f.webContentLink || null;
-                    const preview = (type === 'model') ? (modelPreviewMap.get(base) || null) : null;
-                    const displayUrl = (type === 'image' || type === 'model') ? (preview || publicLink) : null;
-                    
+                    const thumbLink = f.thumbnailLink || null;
+
+                    // For images: use thumbnailLink (better CORS) or fallback to publicLink
+                    const displayUrl = (type === 'image') ? (thumbLink || publicLink) : null;
+                    // For models: use preview from modelPreviewMap or thumbnailLink or publicLink
+                    const modelPreview = (type === 'model') ? (modelPreviewMap.get(base) || thumbLink || publicLink) : null;
+                    // For sounds: no display image
+                    const finalDisplay = (type === 'image') ? displayUrl : (type === 'model' ? modelPreview : null);
+
                     return {
                         id: f.id,
                         title: f.name,
                         type: type,
                         mimeType: mime,
                         size: f.size ? parseInt(f.size) : null,
-                        displayUrl: displayUrl,
+                        displayUrl: finalDisplay,
                         previewUrl: (type === 'sound') ? publicLink : null,
                         downloadUrl: publicLink
                     };
                 });
 
-                // 3. SAVE TO CACHE
+                // Save to cache
                 const cachePayload = {
                     timestamp: Date.now(),
                     allAssets: allAssets,
                     modelPreviewMap: Array.from(modelPreviewMap.entries())
                 };
                 localStorage.setItem(CACHE_KEY, JSON.stringify(cachePayload));
-                console.log(`💾 Fresh data saved to cache. Total assets: ${allAssets.length}`);
+                console.log(`💾 Fresh data saved. Total assets: ${allAssets.length}`);
 
                 const existing = document.querySelector('.cache-indicator');
                 if (existing) existing.remove();
-
                 renderAssets();
             } catch (error) {
                 console.error(error);
@@ -363,11 +378,11 @@
         // ---------- START ----------
         loadAssets();
 
-        // ---------- Clear Cache: Press Ctrl+Shift+C ----------
+        // ---------- Clear Cache shortcut ----------
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 localStorage.removeItem(CACHE_KEY);
-                localStorage.removeItem('orion_drive_asset_cache');
+                ['orion_drive_asset_cache', 'orion_drive_asset_cache_v2', 'orion_drive_asset_cache_v3'].forEach(key => localStorage.removeItem(key));
                 alert('Cache cleared! Refreshing...');
                 location.reload();
             }
@@ -375,6 +390,7 @@
 
         console.log('📦 Cache key:', CACHE_KEY);
         console.log('💡 Press Ctrl+Shift+C to clear cache and reload');
+        console.log('🔗 To force a full reset, visit: ?reset=1');
     </script>
 
     <!-- ==================== CURSOR & PROFILE ==================== -->
